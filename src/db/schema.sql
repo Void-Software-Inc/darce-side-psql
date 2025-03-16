@@ -87,12 +87,12 @@ FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 
 -- Create a sample admin user (password: admin123)
--- Using simplified SHA-256 hash for demo purposes
+-- Using hardcoded hash for demo purposes
 INSERT INTO users (username, email, password_hash, role_id)
 VALUES (
   'admin',
   'admin@example.com',
-  'demo-salt:f6f2ea8f45d8a057c9566a33f99474da2e5c6a6604d736121650e2730c6fb0a3', -- simplified hash for 'admin123'
+  'demo-salt:8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', -- hardcoded hash for 'admin123'
   (SELECT id FROM roles WHERE name = 'admin')
 )
 ON CONFLICT (username) DO NOTHING;
@@ -102,7 +102,7 @@ INSERT INTO users (username, email, password_hash, role_id)
 VALUES (
   'user',
   'user@example.com',
-  'demo-salt:8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', -- simplified hash for 'user123'
+  'demo-salt:8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', -- hardcoded hash for 'user123'
   (SELECT id FROM roles WHERE name = 'user')
 )
 ON CONFLICT (username) DO NOTHING; 
