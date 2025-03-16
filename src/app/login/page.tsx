@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -15,7 +15,25 @@ export default function LoginPage() {
   });
   
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          setIsLoggedIn(true);
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,6 +69,30 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-xl">Loading...</p>
+      </div>
+    );
+  }
+
+  if (isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">You're already logged in!</h2>
+          <Link 
+            href="/dashboard" 
+            className="text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

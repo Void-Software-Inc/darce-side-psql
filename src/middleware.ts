@@ -1,53 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Routes that require authentication
-const protectedRoutes = [
-  '/dashboard',
-  '/admin',
-  '/api/protected'
-];
+const protectedRoutes = ['/dashboard', '/admin'];
 
-// Routes that require admin role
-const adminRoutes = [
-  '/admin',
-  '/api/admin'
-];
+// Routes that should be accessible only when not logged in
+const authRoutes = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Check if the route is protected
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname.startsWith(route)
-  );
-  
-  // Check if the route requires admin role
-  const isAdminRoute = adminRoutes.some(route => 
-    pathname.startsWith(route)
-  );
-  
-  if (!isProtectedRoute && !isAdminRoute) {
-    return NextResponse.next();
-  }
-  
-  // Get the token from the cookies
+  // Get the token from cookies
   const token = request.cookies.get('auth-token')?.value;
   
-  // If no token is found, redirect to login
-  if (!token) {
+  // If trying to access auth routes while logged in, redirect to dashboard
+  if (token && authRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+  
+  // If trying to access protected routes without token, redirect to login
+  if (!token && protectedRoutes.some(route => pathname.startsWith(route))) {
     const url = new URL('/login', request.url);
     url.searchParams.set('from', pathname);
     return NextResponse.redirect(url);
   }
   
-  // For API routes, we'll let the API route handle the authentication
-  // since we can't use the crypto module in middleware
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
-  
-  // For protected pages, we'll do a simple check for now
-  // and let the page component handle the full authentication
   return NextResponse.next();
 }
 
