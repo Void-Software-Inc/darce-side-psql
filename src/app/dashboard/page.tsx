@@ -47,6 +47,8 @@ export default function Dashboard() {
       router.push('/login');
     } catch (error) {
       console.error('Error logging out:', error);
+      // Fallback to direct navigation if the request fails
+      router.push('/api/auth/logout');
     }
   };
   

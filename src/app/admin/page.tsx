@@ -58,7 +58,18 @@ export default function AdminDashboard() {
                 Dashboard
               </Link>
               <button
-                onClick={() => router.push('/api/auth/logout')}
+                onClick={async () => {
+                  try {
+                    // Make a POST request to the logout endpoint
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    // Redirect to login page
+                    router.push('/login');
+                  } catch (error) {
+                    console.error('Error logging out:', error);
+                    // Fallback to direct navigation if the request fails
+                    router.push('/api/auth/logout');
+                  }
+                }}
                 className="px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-900"
               >
                 Logout

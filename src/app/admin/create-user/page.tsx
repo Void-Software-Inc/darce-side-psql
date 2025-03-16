@@ -96,9 +96,28 @@ export default function CreateUserPage() {
         <div className="bg-white shadow-md rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Create New User</h1>
-            <Link href="/admin" className="text-indigo-600 hover:text-indigo-800">
-              Back to Admin
-            </Link>
+            <div className="flex items-center">
+              <Link href="/admin" className="mr-4 text-indigo-600 hover:text-indigo-800">
+                Back to Admin
+              </Link>
+              <button
+                onClick={async () => {
+                  try {
+                    // Make a POST request to the logout endpoint
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    // Redirect to login page
+                    router.push('/login');
+                  } catch (error) {
+                    console.error('Error logging out:', error);
+                    // Fallback to direct navigation if the request fails
+                    router.push('/api/auth/logout');
+                  }
+                }}
+                className="px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-900"
+              >
+                Logout
+              </button>
+            </div>
           </div>
           
           <p className="mb-6 text-gray-600">
