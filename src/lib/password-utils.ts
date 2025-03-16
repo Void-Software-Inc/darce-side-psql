@@ -116,5 +116,5 @@ export async function generateUserHash(password: string, useDemoSalt: boolean = 
     salt = Math.random().toString(36).substring(2, 15);
   }
   
-  return `${salt}:${hashHex}`
+  return `${salt}:${hashHex}`;
 }

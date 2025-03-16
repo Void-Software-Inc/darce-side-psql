@@ -18,8 +18,8 @@ export default function CreateUserPage() {
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
-    sql?: string;
-    hash?: string;
+    userId?: number;
+    error?: string;
   } | null>(null);
   
   const [loading, setLoading] = useState(false);
@@ -40,38 +40,50 @@ export default function CreateUserPage() {
     setResult(null);
     
     try {
-      // Generate hash on the client side for demo purposes
-      // In a real app, you would do this on the server
-      const encoder = new TextEncoder();
-      const data = encoder.encode(formData.password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      // Send the data to the API endpoint
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          useDemoSalt: formData.useDemoSalt,
+          customSalt: formData.customSalt || undefined
+        })
+      });
       
-      // Use demo-salt or custom salt based on user selection
-      const salt = formData.useDemoSalt ? 'demo-salt' : (formData.customSalt || Math.random().toString(36).substring(2, 15));
-      const hash = `${salt}:${hashHex}`;
+      const data = await response.json();
       
-      // Generate SQL statement
-      const sql = `
-        INSERT INTO users (username, email, password_hash, role_id)
-        VALUES (
-        '${formData.username}',
-        '${formData.email}',
-        '${hash}',
-        (SELECT id FROM roles WHERE name = '${formData.role}')
-        );`;
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create user');
+      }
+      
+      // Reset form on success
+      if (data.success) {
+        setFormData({
+          username: '',
+          email: '',
+          password: '',
+          role: 'user',
+          useDemoSalt: true,
+          customSalt: ''
+        });
+      }
       
       setResult({
-        success: true,
-        message: 'User hash generated successfully',
-        sql,
-        hash
+        success: data.success,
+        message: data.message,
+        userId: data.userId
       });
     } catch (error) {
       setResult({
         success: false,
-        message: error instanceof Error ? error.message : 'An error occurred'
+        message: error instanceof Error ? error.message : 'An error occurred',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
       setLoading(false);
@@ -90,8 +102,8 @@ export default function CreateUserPage() {
           </div>
           
           <p className="mb-6 text-gray-600">
-            This tool helps you generate SQL statements to create new users. 
-            You'll need to run the SQL in your database management tool.
+            This tool allows you to create new users directly in the database.
+            Only administrators can create new users.
           </p>
           
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -204,7 +216,7 @@ export default function CreateUserPage() {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
               >
-                {loading ? 'Generating...' : 'Generate SQL'}
+                {loading ? 'Creating User...' : 'Create User'}
               </button>
             </div>
           </form>
@@ -213,24 +225,18 @@ export default function CreateUserPage() {
             <div className={`mt-6 p-4 rounded-md ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
               <h2 className="text-lg font-medium mb-2">{result.message}</h2>
               
-              {result.success && result.sql && (
+              {result.success && result.userId && (
                 <div className="mt-4">
-                  <h3 className="text-md font-medium mb-2">SQL Statement:</h3>
-                  <div className="bg-gray-800 text-white p-4 rounded-md overflow-x-auto">
-                    <pre>{result.sql}</pre>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Copy this SQL and run it in your database management tool (like pgAdmin).
+                  <p className="text-green-700">
+                    User created successfully with ID: {result.userId}
                   </p>
                 </div>
               )}
               
-              {result.success && result.hash && (
+              {!result.success && result.error && (
                 <div className="mt-4">
-                  <h3 className="text-md font-medium mb-2">Password Hash:</h3>
-                  <div className="bg-gray-100 p-2 rounded-md overflow-x-auto">
-                    <code>{result.hash}</code>
-                  </div>
+                  <h3 className="text-md font-medium mb-2">Error Details:</h3>
+                  <p className="text-red-700">{result.error}</p>
                 </div>
               )}
             </div>
