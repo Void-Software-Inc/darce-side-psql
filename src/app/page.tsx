@@ -1,6 +1,37 @@
+'use client';
+
+import { useState } from 'react';
 import Image from "next/image";
 
 export default function Home() {
+  const [dbStatus, setDbStatus] = useState<{
+    success?: boolean;
+    message?: string;
+    data?: any;
+    error?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const testDbConnection = async () => {
+    try {
+      setLoading(true);
+      setDbStatus(null);
+      
+      const response = await fetch('/api/db-test');
+      const data = await response.json();
+      
+      setDbStatus(data);
+    } catch (error) {
+      setDbStatus({
+        success: false,
+        message: 'Failed to test connection',
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -49,6 +80,49 @@ export default function Home() {
           >
             Read our docs
           </a>
+        </div>
+
+        <div className="mb-8">
+          <button
+            onClick={testDbConnection}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
+          >
+            {loading ? 'Testing Connection...' : 'Test Database Connection'}
+          </button>
+        </div>
+
+        {dbStatus && (
+          <div className={`p-4 rounded mb-4 ${dbStatus.success ? 'bg-green-100 border border-green-400' : 'bg-red-100 border border-red-400'}`}>
+            <h2 className="text-xl font-semibold mb-2">
+              {dbStatus.success ? 'Connection Successful' : 'Connection Failed'}
+            </h2>
+            <p className="mb-2">{dbStatus.message}</p>
+            
+            {dbStatus.data && (
+              <div className="mt-4">
+                <h3 className="font-medium">Database Response:</h3>
+                <pre className="bg-gray-800 text-white p-3 rounded mt-2 overflow-x-auto">
+                  {JSON.stringify(dbStatus.data, null, 2)}
+                </pre>
+              </div>
+            )}
+            
+            {dbStatus.error && (
+              <div className="mt-4">
+                <h3 className="font-medium text-red-600">Error:</h3>
+                <p className="text-red-600">{dbStatus.error}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-8 p-4 border rounded bg-gray-50">
+          <h2 className="text-xl font-semibold mb-2">Connection Details</h2>
+          <p className="mb-2">Host: 116.203.30.228</p>
+          <p className="mb-2">Port: 5432</p>
+          <p className="mb-2">Database: postgres</p>
+          <p className="mb-2">User: postgres</p>
         </div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
