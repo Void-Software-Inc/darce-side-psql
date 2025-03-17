@@ -10,6 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 
 interface User {
@@ -24,27 +33,60 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    userId: number | null;
+    username: string;
+  }>({
+    isOpen: false,
+    userId: null,
+    username: ''
+  });
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users/get');
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data.users);
+      } else {
+        setError('Failed to fetch users');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setError('Error loading users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const res = await fetch('/api/admin/users/get');
-        if (res.ok) {
-          const data = await res.json();
-          setUsers(data.users);
-        } else {
-          setError('Failed to fetch users');
-        }
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        setError('Error loading users');
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchUsers();
   }, []);
+
+  const handleDelete = async () => {
+    if (!deleteDialog.userId) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/delete?userId=${deleteDialog.userId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Refresh the users list
+        fetchUsers();
+      } else {
+        setError(data.message || 'Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setError('Error deleting user');
+    } finally {
+      setDeleteDialog({ isOpen: false, userId: null, username: '' });
+    }
+  };
 
   const LoadingSkeleton = () => (
     <Table>
@@ -54,6 +96,7 @@ export default function AdminDashboard() {
           <TableHead className="text-gray-400 font-medium w-[300px]">Email</TableHead>
           <TableHead className="text-gray-400 font-medium w-[100px]">Role</TableHead>
           <TableHead className="text-gray-400 font-medium w-[200px]">Joined</TableHead>
+          <TableHead className="text-gray-400 font-medium w-[100px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -70,6 +113,9 @@ export default function AdminDashboard() {
             </TableCell>
             <TableCell className="py-3">
               <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
+            </TableCell>
+            <TableCell className="py-3">
+              <div className="h-4 bg-gray-800 rounded animate-pulse w-16"></div>
             </TableCell>
           </TableRow>
         ))}
@@ -120,6 +166,7 @@ export default function AdminDashboard() {
                       <TableHead className="text-gray-400 font-medium w-[300px]">Email</TableHead>
                       <TableHead className="text-gray-400 font-medium w-[100px]">Role</TableHead>
                       <TableHead className="text-gray-400 font-medium w-[200px]">Joined</TableHead>
+                      <TableHead className="text-gray-400 font-medium w-[100px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -139,6 +186,20 @@ export default function AdminDashboard() {
                         <TableCell className="text-gray-200 py-3">
                           {new Date(user.created_at).toLocaleString()}
                         </TableCell>
+                        <TableCell className="py-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                            onClick={() => setDeleteDialog({
+                              isOpen: true,
+                              userId: user.id,
+                              username: user.username
+                            })}
+                          >
+                            Delete
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -148,6 +209,42 @@ export default function AdminDashboard() {
           </div>
         </Card>
       </div>
+
+      <Dialog 
+        open={deleteDialog.isOpen} 
+        onOpenChange={(isOpen) => 
+          setDeleteDialog(prev => ({ ...prev, isOpen }))
+        }
+      >
+        <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete User</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete {deleteDialog.username}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-start">
+            <div className="flex gap-3 w-full">
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1"
+                onClick={handleDelete}
+              >
+                Delete
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 bg-transparent border-gray-800 text-gray-400 hover:bg-[#222222] hover:text-gray-200"
+                onClick={() => setDeleteDialog({ isOpen: false, userId: null, username: '' })}
+              >
+                Cancel
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
