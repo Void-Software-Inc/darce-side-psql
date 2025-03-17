@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import Image from 'next/image';
 
 interface User {
   id: number;
@@ -20,13 +21,53 @@ interface Video {
   type: string;
   author: string;
   number_of_videos?: number;
+  labels?: string[];
   created_at: string;
   created_by: string;
 }
 
+function VideoGrid({ videos }: { videos: Video[] }) {
+  if (videos.length === 0) {
+    return (
+      <Card className="p-6 bg-[#111] border-gray-800">
+        <p className="text-gray-400 text-center">No videos available yet.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {videos.map((video) => (
+        <Card 
+          key={video.id} 
+          className="bg-[#111] border-gray-800 overflow-hidden flex flex-col cursor-pointer hover:border-gray-600 transition-colors"
+          onClick={() => window.open(video.playlist_url, '_blank')}
+        >
+          <div className="relative aspect-square w-full bg-[#111]">
+            <Image
+              src={video.image_url} 
+              alt={video.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+              className="object-contain"
+              priority={false}
+            />
+          </div>
+          <div className="p-3">
+            <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
+            <p className="text-xs text-gray-400">by {video.author}</p>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [instructionals, setInstructionals] = useState<Video[]>([]);
+  const [matches, setMatches] = useState<Video[]>([]);
+  const [tournaments, setTournaments] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,12 +78,27 @@ export default function Home() {
           const data = await res.json();
           setUser(data.user);
 
-          // If user is authenticated, fetch videos
+          // If user is authenticated, fetch videos by type
           if (data.user) {
-            const videosRes = await fetch('/api/videos/get');
-            if (videosRes.ok) {
-              const videosData = await videosRes.json();
-              setVideos(videosData.videos);
+            const [instructionalsRes, matchesRes, tournamentsRes] = await Promise.all([
+              fetch('/api/videos/instructionals/get'),
+              fetch('/api/videos/matches/get'),
+              fetch('/api/videos/tournaments/get')
+            ]);
+
+            if (instructionalsRes.ok) {
+              const data = await instructionalsRes.json();
+              setInstructionals(data.videos);
+            }
+
+            if (matchesRes.ok) {
+              const data = await matchesRes.json();
+              setMatches(data.videos);
+            }
+
+            if (tournamentsRes.ok) {
+              const data = await tournamentsRes.json();
+              setTournaments(data.videos);
             }
           }
         }
@@ -95,54 +151,22 @@ export default function Home() {
           <p className="text-gray-400">Ready to level up your grappling game?</p>
         </div>
 
-        {/* Videos Grid */}
+        {/* Instructionals Section */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Available Videos</h2>
-          {videos.length === 0 ? (
-            <Card className="p-6 bg-[#111] border-gray-800">
-              <p className="text-gray-400 text-center">No videos available yet.</p>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {videos.map((video) => (
-                <Card key={video.id} className="bg-[#111] border-gray-800 overflow-hidden">
-                  <div className="aspect-video relative">
-                    <img 
-                      src={video.image_url} 
-                      alt={video.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-2">{video.title}</h3>
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">{video.description}</p>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>Author: {video.author}</span>
-                        <span className="px-2 py-1 bg-[#222] rounded text-xs">{video.type}</span>
-                      </div>
-                      {video.number_of_videos && (
-                        <div className="text-sm text-gray-500">
-                          Number of videos: {video.number_of_videos}
-                        </div>
-                      )}
-                      <div className="text-sm text-gray-500">
-                        <span>Added by {video.created_by}</span>
-                        <span className="mx-2">•</span>
-                        <span>{new Date(video.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    <Button 
-                      className="w-full"
-                      onClick={() => window.open(video.playlist_url, '_blank')}
-                    >
-                      Watch Video
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+          <h2 className="text-2xl font-bold mb-6">Available Instructionals</h2>
+          <VideoGrid videos={instructionals} />
+        </div>
+
+        {/* Matches Section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">Available Matches</h2>
+          <VideoGrid videos={matches} />
+        </div>
+
+        {/* Tournaments Section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">Available Tournaments</h2>
+          <VideoGrid videos={tournaments} />
         </div>
 
         {/* Featured Content */}

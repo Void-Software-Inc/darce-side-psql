@@ -32,26 +32,16 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Get type from search params if provided
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type');
     
-    // Build the query based on whether type is provided
-    const whereClause = type 
-      ? 'WHERE v.is_active = true AND v.type = $1'
-      : 'WHERE v.is_active = true';
-    
-    // Get all active videos with creator information
+    // Get all active match videos with creator information
     const videosResult = await query(
       `SELECT v.id, v.title, v.description, v.image_url, v.playlist_url, 
               v.type, v.author, v.number_of_videos, v.labels,
               v.created_at, u.username as created_by
        FROM videos v
        JOIN users u ON v.created_by = u.id
-       ${whereClause}
-       ORDER BY v.created_at DESC`,
-      type ? [type] : []
+       WHERE v.is_active = true AND v.type = 'match'
+       ORDER BY v.created_at DESC`
     );
     
     // Return the videos
@@ -60,7 +50,7 @@ export async function GET(request: NextRequest) {
       videos: videosResult.rows
     });
   } catch (error) {
-    console.error('Error getting videos:', error);
+    console.error('Error getting match videos:', error);
     return NextResponse.json(
       { success: false, message: 'An error occurred' },
       { status: 500 }
