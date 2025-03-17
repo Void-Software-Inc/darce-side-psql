@@ -1,18 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Card } from '@/components/ui/card';
 
 export default function CreateUserPage() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    role: 'user',
-    useDemoSalt: true,
-    customSalt: ''
+    role: 'user'
   });
   
   const [result, setResult] = useState<{
@@ -29,19 +25,13 @@ export default function CreateUserPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
-  };
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setResult(null);
     
     try {
-      // Send the data to the API endpoint
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch('/api/admin/users/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -51,8 +41,7 @@ export default function CreateUserPage() {
           email: formData.email,
           password: formData.password,
           role: formData.role,
-          useDemoSalt: formData.useDemoSalt,
-          customSalt: formData.customSalt || undefined
+          useDemoSalt: false // Always use random salt
         })
       });
       
@@ -68,9 +57,7 @@ export default function CreateUserPage() {
           username: '',
           email: '',
           password: '',
-          role: 'user',
-          useDemoSalt: true,
-          customSalt: ''
+          role: 'user'
         });
       }
       
@@ -91,51 +78,18 @@ export default function CreateUserPage() {
   };
   
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Create New User</h1>
-            <div className="flex items-center">
-              <Link href="/admin" className="mr-4 text-indigo-600 hover:text-indigo-800">
-                Back to Admin
-              </Link>
-              <button
-                onClick={async () => {
-                  try {
-                    // Make a POST request to the logout endpoint
-                    await fetch('/api/auth/logout', { method: 'POST' });
-                    // Redirect to login page
-                    router.push('/login');
-                  } catch (error) {
-                    console.error('Error logging out:', error);
-                    // Fallback to direct navigation if the request fails
-                    router.push('/api/auth/logout');
-                  }
-                }}
-                className="px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-900"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-black text-white px-4 py-8">
+      <div className="container mx-auto max-w-3xl">
+        <Card className="bg-[#111] border-gray-800 p-6">
+          <h1 className="text-2xl font-bold text-gray-200 mb-6">Create New User</h1>
           
-          <p className="mb-6 text-gray-600">
-            This tool allows you to create new users directly in the database.
-            Only administrators can create new users.
+          <p className="mb-6 text-gray-400">
+            Create a new user account with the specified role.
           </p>
-          
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <h3 className="text-md font-medium text-yellow-800 mb-2">Important Note</h3>
-            <p className="text-sm text-yellow-700">
-              The demo users (admin/user123) use hardcoded password checks for backward compatibility.
-              New users created with demo-salt will work with the normal hash comparison.
-            </p>
-          </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-200">
                 Username
               </label>
               <input
@@ -143,14 +97,14 @@ export default function CreateUserPage() {
                 id="username"
                 name="username"
                 required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full bg-[#1a1a1a] border border-gray-800 rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-gray-700"
                 value={formData.username}
                 onChange={handleChange}
               />
             </div>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-200">
                 Email
               </label>
               <input
@@ -158,14 +112,14 @@ export default function CreateUserPage() {
                 id="email"
                 name="email"
                 required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full bg-[#1a1a1a] border border-gray-800 rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-gray-700"
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-200">
                 Password
               </label>
               <input
@@ -173,21 +127,21 @@ export default function CreateUserPage() {
                 id="password"
                 name="password"
                 required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full bg-[#1a1a1a] border border-gray-800 rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-gray-700"
                 value={formData.password}
                 onChange={handleChange}
               />
             </div>
             
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="role" className="block text-sm font-medium text-gray-200">
                 Role
               </label>
               <select
                 id="role"
                 name="role"
                 required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="mt-1 block w-full bg-[#1a1a1a] border border-gray-800 rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-gray-700"
                 value={formData.role}
                 onChange={handleChange}
               >
@@ -196,44 +150,11 @@ export default function CreateUserPage() {
               </select>
             </div>
             
-            <div className="pt-2">
-              <div className="flex items-center">
-                <input
-                  id="useDemoSalt"
-                  name="useDemoSalt"
-                  type="checkbox"
-                  checked={formData.useDemoSalt}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="useDemoSalt" className="ml-2 block text-sm text-gray-700">
-                  Use demo-salt (for backward compatibility)
-                </label>
-              </div>
-            </div>
-            
-            {!formData.useDemoSalt && (
-              <div>
-                <label htmlFor="customSalt" className="block text-sm font-medium text-gray-700">
-                  Custom Salt (leave empty for random salt)
-                </label>
-                <input
-                  type="text"
-                  id="customSalt"
-                  name="customSalt"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  value={formData.customSalt}
-                  onChange={handleChange}
-                  placeholder="Enter custom salt or leave empty for random"
-                />
-              </div>
-            )}
-            
             <div className="pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Creating User...' : 'Create User'}
               </button>
@@ -241,12 +162,20 @@ export default function CreateUserPage() {
           </form>
           
           {result && (
-            <div className={`mt-6 p-4 rounded-md ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-              <h2 className="text-lg font-medium mb-2">{result.message}</h2>
+            <div className={`mt-6 p-4 rounded-md ${
+              result.success 
+                ? 'bg-green-900/20 border border-green-900/30' 
+                : 'bg-red-900/20 border border-red-900/30'
+            }`}>
+              <h2 className={`text-lg font-medium mb-2 ${
+                result.success ? 'text-green-200' : 'text-red-200'
+              }`}>
+                {result.message}
+              </h2>
               
               {result.success && result.userId && (
                 <div className="mt-4">
-                  <p className="text-green-700">
+                  <p className="text-green-200/70">
                     User created successfully with ID: {result.userId}
                   </p>
                 </div>
@@ -254,13 +183,13 @@ export default function CreateUserPage() {
               
               {!result.success && result.error && (
                 <div className="mt-4">
-                  <h3 className="text-md font-medium mb-2">Error Details:</h3>
-                  <p className="text-red-700">{result.error}</p>
+                  <h3 className="text-md font-medium mb-2 text-red-200">Error Details:</h3>
+                  <p className="text-red-200/70">{result.error}</p>
                 </div>
               )}
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

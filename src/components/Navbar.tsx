@@ -100,9 +100,9 @@ export default function Navbar() {
                 <BreadcrumbSeparator className="text-gray-600" />
                 <BreadcrumbItem>
                   {isLast ? (
-                    <BreadcrumbPage className="text-gray-400">{displayText}</BreadcrumbPage>
+                    <BreadcrumbPage className="text-gray-400 text-xl tracking-tighter font-bold uppercase">{displayText}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={href} className="text-gray-400 hover:text-white transition-colors">{displayText}</BreadcrumbLink>
+                    <BreadcrumbLink href={href} className="text-gray-400 text-xl tracking-tighter font-bold uppercase hover:text-white transition-colors">{displayText}</BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
               </React.Fragment>
