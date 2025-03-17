@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
 
 interface User {
   id: number;
@@ -16,7 +14,6 @@ interface User {
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     async function checkAuth() {
@@ -36,19 +33,6 @@ export default function Home() {
     checkAuth();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      const res = await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-      if (res.ok) {
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
@@ -67,48 +51,20 @@ export default function Home() {
           <p className="text-sm text-gray-500 mb-12 tracking-widest uppercase">
             By Invitation Only
           </p>
-          <Link href="/login">
-            <Button 
-              variant="outline" 
-              className="bg-transparent border-gray-800 text-gray-400 hover:text-white hover:bg-[#111] transition-all duration-500 px-8"
-            >
-              Enter
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            className="bg-transparent border-gray-800 text-gray-400 hover:text-white hover:bg-[#111] transition-all duration-500 px-8"
+            onClick={() => window.location.href = '/login'}
+          >
+            Enter
+          </Button>
         </div>
       </div>
     );
   }
 
-  const isAdmin = user.role === 'admin';
-
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar */}
-      <nav className="border-b border-gray-800">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold tracking-tighter hover:text-gray-300 transition-colors">
-            DARCE SIDE
-          </Link>
-          <div className="flex items-center gap-4">
-            {isAdmin && (
-              <Link href="/admin">
-                <Button variant="ghost" className="text-gray-400 hover:text-white">
-                  Dashboard
-                </Button>
-              </Link>
-            )}
-            <Button 
-              variant="ghost" 
-              className="text-gray-400 hover:text-white"
-              onClick={handleLogout}
-            >
-              Logout
-            </Button>
-          </div>
-        </div>
-      </nav>
-
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-12">
