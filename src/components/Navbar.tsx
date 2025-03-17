@@ -125,6 +125,14 @@ export default function Navbar() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {generateBreadcrumbs()}
           <div className="flex items-center gap-4">
+            <Link href="/videos">
+              <Button 
+                variant="ghost" 
+                className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
+              >
+                Videos
+              </Button>
+            </Link>
             {isAdmin && (
               <Link href="/admin">
                 <Button 
