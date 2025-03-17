@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { pool } from '@/db/pool';
+import { query } from '@/lib/db';
 import { verifyToken, getUserById } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert the video into the database
-    const result = await pool.query(
+    const result = await query(
       `INSERT INTO videos (title, description, image_url, playlist_url, type, author, number_of_videos, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,

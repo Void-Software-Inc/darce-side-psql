@@ -1,6 +1,7 @@
 import { hashPassword, comparePassword } from './password-utils';
 import jwt from 'jsonwebtoken';
 import { pool, query } from './db';
+import { cookies, headers } from 'next/headers';
 
 // Types
 export interface User {
@@ -151,6 +152,104 @@ export async function getUserById(userId: number): Promise<User | null> {
 /**
  * Check if a user has a specific permission
  */
-export function hasPermission(user: User, permission: string): boolean {
-  return user.permissions?.includes(permission) || false;
+export async function hasPermission(userId: number, permission: string): Promise<boolean> {
+  try {
+    const result = await query(
+      `SELECT EXISTS (
+        SELECT 1
+        FROM users u
+        JOIN role_permissions rp ON u.role_id = rp.role_id
+        JOIN permissions p ON rp.permission_id = p.id
+        WHERE u.id = $1 AND p.name = $2
+      ) as has_permission`,
+      [userId, permission]
+    );
+    
+    return result.rows[0].has_permission;
+  } catch (error) {
+    console.error('Error checking permission:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if a user has a specific role
+ */
+export async function hasRole(userId: number, role: string): Promise<boolean> {
+  try {
+    const result = await query(
+      `SELECT EXISTS (
+        SELECT 1
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        WHERE u.id = $1 AND r.name = $2
+      ) as has_role`,
+      [userId, role]
+    );
+    
+    return result.rows[0].has_role;
+  } catch (error) {
+    console.error('Error checking role:', error);
+    return false;
+  }
+}
+
+/**
+ * Get all permissions for a user
+ */
+export async function getUserPermissions(userId: number): Promise<string[]> {
+  try {
+    const result = await query(
+      `SELECT DISTINCT p.name
+       FROM permissions p
+       JOIN role_permissions rp ON p.id = rp.permission_id
+       JOIN users u ON rp.role_id = u.role_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+    
+    return result.rows.map(row => row.name);
+  } catch (error) {
+    console.error('Error getting user permissions:', error);
+    return [];
+  }
+}
+
+interface JwtPayload {
+  userId: number;
+}
+
+export async function verifyAdmin(): Promise<{ isAdmin: boolean; userId: number }> {
+  try {
+    const headersList = headers();
+    const cookie = (await headersList).get('cookie');
+    const token = cookie?.match(/auth-token=([^;]+)/)?.[1];
+
+    if (!token) {
+      return { isAdmin: false, userId: 0 };
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    
+    const result = await pool.query(
+      `SELECT u.id, r.name as role
+       FROM users u
+       JOIN roles r ON u.role_id = r.id
+       WHERE u.id = $1`,
+      [decoded.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return { isAdmin: false, userId: 0 };
+    }
+
+    const user = result.rows[0];
+    return {
+      isAdmin: user.role === 'admin',
+      userId: user.id
+    };
+  } catch (error) {
+    console.error('Error verifying admin status:', error);
+    return { isAdmin: false, userId: 0 };
+  }
 } 

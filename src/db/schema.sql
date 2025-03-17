@@ -1,3 +1,31 @@
+-- Enable database session variables for user context
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Function to get current user context
+CREATE OR REPLACE FUNCTION get_current_user_id() RETURNS INTEGER AS $$
+BEGIN
+    RETURN NULLIF(current_setting('app.user_id', TRUE), '')::INTEGER;
+EXCEPTION 
+    WHEN OTHERS THEN 
+        RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get current user role
+CREATE OR REPLACE FUNCTION get_current_user_role() RETURNS VARCHAR AS $$
+BEGIN
+    RETURN (
+        SELECT r.name 
+        FROM roles r 
+        JOIN users u ON u.role_id = r.id 
+        WHERE u.id = get_current_user_id()
+    );
+EXCEPTION 
+    WHEN OTHERS THEN
+        RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Create roles table
 CREATE TABLE IF NOT EXISTS roles (
   id SERIAL PRIMARY KEY,
@@ -20,6 +48,22 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create videos table
+CREATE TABLE IF NOT EXISTS videos (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  image_url TEXT NOT NULL,
+  playlist_url TEXT NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  author VARCHAR(100) NOT NULL,
+  number_of_videos INTEGER,
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create permissions table
 CREATE TABLE IF NOT EXISTS permissions (
   id SERIAL PRIMARY KEY,
@@ -35,6 +79,83 @@ CREATE TABLE IF NOT EXISTS role_permissions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (role_id, permission_id)
 );
+
+-- Enable Row Level Security on tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS Policies for users table
+CREATE POLICY users_view_policy ON users
+    FOR SELECT
+    TO PUBLIC
+    USING (
+        -- Users can view their own data, admins can view all
+        get_current_user_id() IS NOT NULL AND (
+            id = get_current_user_id() OR 
+            get_current_user_role() = 'admin'
+        )
+    );
+
+CREATE POLICY users_insert_policy ON users
+    FOR INSERT
+    TO PUBLIC
+    WITH CHECK (
+        -- Only admins can create users
+        get_current_user_role() = 'admin'
+    );
+
+CREATE POLICY users_update_policy ON users
+    FOR UPDATE
+    TO PUBLIC
+    USING (
+        -- Users can update their own data, admins can update all
+        get_current_user_id() IS NOT NULL AND (
+            id = get_current_user_id() OR 
+            get_current_user_role() = 'admin'
+        )
+    );
+
+CREATE POLICY users_delete_policy ON users
+    FOR DELETE
+    TO PUBLIC
+    USING (
+        -- Only admins can delete users
+        get_current_user_role() = 'admin'
+    );
+
+-- Create RLS Policies for videos table
+CREATE POLICY videos_view_policy ON videos
+    FOR SELECT
+    TO PUBLIC
+    USING (
+        -- Authenticated users can view active videos
+        get_current_user_id() IS NOT NULL AND
+        is_active = true
+    );
+
+CREATE POLICY videos_insert_policy ON videos
+    FOR INSERT
+    TO PUBLIC
+    WITH CHECK (
+        -- Only admins can create videos
+        get_current_user_role() = 'admin'
+    );
+
+CREATE POLICY videos_update_policy ON videos
+    FOR UPDATE
+    TO PUBLIC
+    USING (
+        -- Only admins can update videos
+        get_current_user_role() = 'admin'
+    );
+
+CREATE POLICY videos_delete_policy ON videos
+    FOR DELETE
+    TO PUBLIC
+    USING (
+        -- Only admins can delete videos
+        get_current_user_role() = 'admin'
+    );
 
 -- Insert default roles
 INSERT INTO roles (name, description) VALUES
@@ -83,6 +204,11 @@ EXECUTE FUNCTION update_modified_column();
 
 CREATE TRIGGER update_roles_modtime
 BEFORE UPDATE ON roles
+FOR EACH ROW
+EXECUTE FUNCTION update_modified_column();
+
+CREATE TRIGGER update_videos_modtime
+BEFORE UPDATE ON videos
 FOR EACH ROW
 EXECUTE FUNCTION update_modified_column();
 
