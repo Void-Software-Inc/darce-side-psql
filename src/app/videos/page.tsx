@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { VideoGridSkeleton } from './components/video-skeleton';
+import { useRouter } from 'next/navigation';
 
 interface Video {
   id: number;
@@ -23,6 +24,8 @@ interface Video {
 type VideoType = 'all' | 'instructionals' | 'matches' | 'tournaments';
 
 function VideoGrid({ videos }: { videos: Video[] }) {
+  const router = useRouter();
+
   if (videos.length === 0) {
     return (
       <Card className="p-6 bg-[#111] border-gray-800">
@@ -37,7 +40,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
         <Card 
           key={video.id} 
           className="bg-[#111] border-gray-800 overflow-hidden flex flex-col cursor-pointer hover:border-gray-600 transition-colors"
-          onClick={() => window.open(video.playlist_url, '_blank')}
+          onClick={() => router.push(`/videos/${video.id}`)}
         >
           <div className="relative aspect-square w-full bg-[#111]">
             <Image
