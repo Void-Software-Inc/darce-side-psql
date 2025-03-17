@@ -44,8 +44,11 @@ export default function AdminGuard({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl">Loading...</p>
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div>
+          <div className="w-16 h-16 border-4 border-gray-800 border-t-gray-400 rounded-full animate-spin mb-4 mx-auto"></div>
+          <p className="text-gray-400">Checking permissions...</p>
+        </div>
       </div>
     );
   }
