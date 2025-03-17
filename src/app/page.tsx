@@ -171,34 +171,6 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-6">Available Tournaments</h2>
           <VideoGrid videos={tournaments} />
         </div>
-
-        {/* Featured Content */}
-        <Card className="p-6 bg-[#111] border-gray-800 mb-8">
-          <h2 className="text-xl font-bold mb-4">Featured This Week</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-4 bg-[#222] rounded-lg">
-              <h3 className="font-medium">Guard Retention</h3>
-              <p className="text-sm text-gray-400">New series available</p>
-            </div>
-            <div className="p-4 bg-[#222] rounded-lg">
-              <h3 className="font-medium">Competition Prep</h3>
-              <p className="text-sm text-gray-400">Training strategies</p>
-            </div>
-            <div className="p-4 bg-[#222] rounded-lg">
-              <h3 className="font-medium">Advanced Concepts</h3>
-              <p className="text-sm text-gray-400">Theory and application</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Community Section */}
-        <Card className="p-6 bg-[#111] border-gray-800">
-          <h2 className="text-xl font-bold mb-4">Community Highlights</h2>
-          <p className="text-gray-400 mb-4">
-            Connect with fellow grapplers and share your journey
-          </p>
-          <Button variant="outline">Join Discussion</Button>
-        </Card>
       </div>
     </div>
   );

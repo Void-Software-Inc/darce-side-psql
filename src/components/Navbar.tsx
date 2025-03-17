@@ -13,6 +13,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import React from 'react';
+import { Menu, X } from 'lucide-react';
 
 interface User {
   id: number;
@@ -24,8 +25,14 @@ interface User {
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Close menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
 
   const checkAuth = async () => {
     try {
@@ -35,7 +42,6 @@ export default function Navbar() {
         setUser(data.user);
       } else {
         setUser(null);
-        // Only redirect to login if trying to access protected routes
         if (pathname !== '/' && pathname !== '/login') {
           router.push('/login');
         }
@@ -59,7 +65,6 @@ export default function Navbar() {
       });
       if (res.ok) {
         setUser(null);
-        // Force a full page refresh to reset all state
         window.location.href = '/';
       }
     } catch (error) {
@@ -90,20 +95,37 @@ export default function Navbar() {
             )}
           </BreadcrumbItem>
           
+          {/* Only show the last path on mobile */}
           {paths.map((path, index) => {
             const href = `/${paths.slice(0, index + 1).join('/')}`;
             const isLast = index === paths.length - 1;
             const displayText = path.charAt(0).toUpperCase() + path.slice(1);
 
+            // On mobile, only show if it's the last item
+            if (isLast) {
+              return (
+                <React.Fragment key={href}>
+                  <BreadcrumbSeparator className="text-gray-600" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-gray-400 text-xl tracking-tighter font-bold uppercase">
+                      {displayText}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </React.Fragment>
+              );
+            }
+
+            // On desktop, show all items
             return (
               <React.Fragment key={href}>
-                <BreadcrumbSeparator className="text-gray-600" />
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage className="text-gray-400 text-xl tracking-tighter font-bold uppercase">{displayText}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink href={href} className="text-gray-400 text-xl tracking-tighter font-bold uppercase hover:text-white transition-colors">{displayText}</BreadcrumbLink>
-                  )}
+                <BreadcrumbSeparator className="text-gray-600 hidden sm:block" />
+                <BreadcrumbItem className="hidden sm:block">
+                  <BreadcrumbLink 
+                    href={href} 
+                    className="text-gray-400 text-xl tracking-tighter font-bold uppercase hover:text-white transition-colors"
+                  >
+                    {displayText}
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
               </React.Fragment>
             );
@@ -113,22 +135,23 @@ export default function Navbar() {
     );
   };
 
-  // Don't show anything while checking auth
   if (loading) return null;
-
-  // Don't show navbar on login page or when logged out
   if (isLoginPage || !user) return null;
 
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-gray-800">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          {generateBreadcrumbs()}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            {generateBreadcrumbs()}
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-4">
             <Link href="/videos">
               <Button 
                 variant="ghost" 
-                className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
+                className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300"
               >
                 Videos
               </Button>
@@ -137,7 +160,7 @@ export default function Navbar() {
               <Link href="/admin">
                 <Button 
                   variant="ghost" 
-                  className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
+                  className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300"
                 >
                   Dashboard
                 </Button>
@@ -145,16 +168,57 @@ export default function Navbar() {
             )}
             <Button 
               variant="ghost" 
-              className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
+              className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300"
               onClick={handleLogout}
             >
               Logout
             </Button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 text-gray-400 hover:text-white transition-colors"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-[#111] border-t border-gray-800">
+            <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+              <Link href="/videos" className="w-full">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
+                >
+                  Videos
+                </Button>
+              </Link>
+              {isAdmin && (
+                <Link href="/admin" className="w-full">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
+              )}
+              <Button 
+                variant="ghost" 
+                className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            </div>
+          </div>
+        )}
       </nav>
       {/* Spacer to prevent content from going under fixed navbar */}
-      <div className="h-16" />
+      <div className={`h-16 ${isMenuOpen ? (isAdmin ? 'md:h-16 h-[144px]' : 'md:h-16 h-[96px]') : 'h-16'}`} />
     </>
   );
 } 

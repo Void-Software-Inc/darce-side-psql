@@ -105,7 +105,7 @@ export default function VideoPage() {
           {/* Sidebar - Video Information */}
           <div className="space-y-6">
             <Card className="bg-[#111] border-gray-800 p-6">
-              <h2 className="text-xl font-semibold mb-4">Video Information</h2>
+              <h2 className="text-xl font-semibold mb-4 text-white">Video Information</h2>
               
               <div className="space-y-4">
                 <div>
