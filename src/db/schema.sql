@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS videos (
   type VARCHAR(50) NOT NULL,
   author VARCHAR(100) NOT NULL,
   number_of_videos INTEGER,
+  labels TEXT[] DEFAULT '{}',
   created_by INTEGER NOT NULL REFERENCES users(id),
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

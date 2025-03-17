@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { title, description, imageUrl, playlistUrl, type, author, numberOfVideos } = await request.json();
+    const { title, description, imageUrl, playlistUrl, type, author, numberOfVideos, labels = [] } = await request.json();
 
     // Validate required fields
     if (!title || !imageUrl || !playlistUrl || !type || !author) {
@@ -52,12 +52,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate labels is an array of strings
+    if (!Array.isArray(labels) || !labels.every(label => typeof label === 'string')) {
+      return NextResponse.json(
+        { success: false, message: 'Labels must be an array of strings' },
+        { status: 400 }
+      );
+    }
+
     // Insert the video into the database
     const result = await query(
-      `INSERT INTO videos (title, description, image_url, playlist_url, type, author, number_of_videos, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO videos (title, description, image_url, playlist_url, type, author, number_of_videos, labels, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id`,
-      [title, description, imageUrl, playlistUrl, type, author, numberOfVideos || null, user.id]
+      [title, description, imageUrl, playlistUrl, type, author, numberOfVideos || null, labels, user.id]
     );
 
     // Return success response

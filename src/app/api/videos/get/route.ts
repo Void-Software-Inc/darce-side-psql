@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     // Get all active videos with creator information
     const videosResult = await query(
       `SELECT v.id, v.title, v.description, v.image_url, v.playlist_url, 
-              v.type, v.author, v.number_of_videos,
+              v.type, v.author, v.number_of_videos, v.labels,
               v.created_at, u.username as created_by
        FROM videos v
        JOIN users u ON v.created_by = u.id
