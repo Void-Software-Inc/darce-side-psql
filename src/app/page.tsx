@@ -11,8 +11,22 @@ interface User {
   role?: string;
 }
 
+interface Video {
+  id: number;
+  title: string;
+  description: string;
+  image_url: string;
+  playlist_url: string;
+  type: string;
+  author: string;
+  number_of_videos?: number;
+  created_at: string;
+  created_by: string;
+}
+
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,6 +36,15 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json();
           setUser(data.user);
+
+          // If user is authenticated, fetch videos
+          if (data.user) {
+            const videosRes = await fetch('/api/videos/get');
+            if (videosRes.ok) {
+              const videosData = await videosRes.json();
+              setVideos(videosData.videos);
+            }
+          }
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -36,7 +59,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
-        <p className="text-xl text-white">Loading...</p>
+        <div className="w-16 h-16 border-4 border-gray-800 border-t-gray-400 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -72,37 +95,54 @@ export default function Home() {
           <p className="text-gray-400">Ready to level up your grappling game?</p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <Card className="p-6 bg-[#111] border-gray-800">
-            <h2 className="text-xl font-bold mb-4">Latest Instructionals</h2>
-            <div className="space-y-4">
-              <div className="p-4 bg-[#222] rounded-lg">
-                <h3 className="font-medium">Darce Choke Mastery</h3>
-                <p className="text-sm text-gray-400">Updated 2 days ago</p>
-              </div>
-              <div className="p-4 bg-[#222] rounded-lg">
-                <h3 className="font-medium">Leg Lock System</h3>
-                <p className="text-sm text-gray-400">Updated 5 days ago</p>
-              </div>
+        {/* Videos Grid */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">Available Videos</h2>
+          {videos.length === 0 ? (
+            <Card className="p-6 bg-[#111] border-gray-800">
+              <p className="text-gray-400 text-center">No videos available yet.</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {videos.map((video) => (
+                <Card key={video.id} className="bg-[#111] border-gray-800 overflow-hidden">
+                  <div className="aspect-video relative">
+                    <img 
+                      src={video.image_url} 
+                      alt={video.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2">{video.title}</h3>
+                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">{video.description}</p>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <span>Author: {video.author}</span>
+                        <span className="px-2 py-1 bg-[#222] rounded text-xs">{video.type}</span>
+                      </div>
+                      {video.number_of_videos && (
+                        <div className="text-sm text-gray-500">
+                          Number of videos: {video.number_of_videos}
+                        </div>
+                      )}
+                      <div className="text-sm text-gray-500">
+                        <span>Added by {video.created_by}</span>
+                        <span className="mx-2">•</span>
+                        <span>{new Date(video.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={() => window.open(video.playlist_url, '_blank')}
+                    >
+                      Watch Video
+                    </Button>
+                  </div>
+                </Card>
+              ))}
             </div>
-            <Button className="w-full mt-4">View All Instructionals</Button>
-          </Card>
-
-          <Card className="p-6 bg-[#111] border-gray-800">
-            <h2 className="text-xl font-bold mb-4">Your Progress</h2>
-            <div className="space-y-4">
-              <div className="p-4 bg-[#222] rounded-lg">
-                <h3 className="font-medium">Recently Viewed</h3>
-                <p className="text-sm text-gray-400">Back Attack System - Part 3</p>
-              </div>
-              <div className="p-4 bg-[#222] rounded-lg">
-                <h3 className="font-medium">Bookmarked</h3>
-                <p className="text-sm text-gray-400">5 techniques saved</p>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full mt-4">View Progress</Button>
-          </Card>
+          )}
         </div>
 
         {/* Featured Content */}

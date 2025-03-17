@@ -147,12 +147,20 @@ export default function AdminDashboard() {
                 </h1>
                 <p className="text-gray-400 text-sm mt-1">Manage and monitor user accounts</p>
               </div>
-              <Link
-                href="/admin/create-user"
-                className="px-4 py-2 bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 rounded-md transition-colors text-sm font-medium"
-              >
-                Create User
-              </Link>
+              <div className="flex gap-3">
+                <Link
+                  href="/admin/create-video"
+                  className="px-4 py-2 bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 rounded-md transition-colors text-sm font-medium"
+                >
+                  Create Video
+                </Link>
+                <Link
+                  href="/admin/create-user"
+                  className="px-4 py-2 bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 rounded-md transition-colors text-sm font-medium"
+                >
+                  Create User
+                </Link>
+              </div>
             </div>
 
             <div className="rounded-lg overflow-hidden border border-[#2a2a2a]">
