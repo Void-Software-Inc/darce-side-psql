@@ -42,7 +42,7 @@ export default function Navbar() {
         setUser(data.user);
       } else {
         setUser(null);
-        if (pathname !== '/' && pathname !== '/login') {
+        if (pathname !== '/' && pathname !== '/login' && pathname !== '/register') {
           router.push('/login');
         }
       }
@@ -75,6 +75,7 @@ export default function Navbar() {
   const isAdmin = user?.role === 'admin';
   const isHomePage = pathname === '/';
   const isLoginPage = pathname === '/login';
+  const isRegisterPage = pathname === '/register';
 
   // Generate breadcrumbs based on pathname
   const generateBreadcrumbs = () => {
@@ -136,7 +137,7 @@ export default function Navbar() {
   };
 
   if (loading) return null;
-  if (isLoginPage || !user) return null;
+  if (isLoginPage || isRegisterPage || !user) return null;
 
   return (
     <>

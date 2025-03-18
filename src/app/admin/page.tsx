@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UsersOverview from './components/users-overview';
 import VideosOverview from './components/videos-overview';
+import CodesOverview from './components/codes-overview';
 import Link from 'next/link';
-import { Plus, UserPlus, Video } from 'lucide-react';
+import { Video, UserPlus, Key } from 'lucide-react';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
+
+  const handleGenerateCode = () => {
+    document.dispatchEvent(new CustomEvent('generate-code'));
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -18,7 +23,7 @@ export default function AdminPage() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">Admin Dashboard</h1>
-            <p className="text-gray-400">Manage users and videos</p>
+            <p className="text-gray-400">Manage users, videos, and access codes</p>
           </div>
 
           {/* Create Buttons */}
@@ -43,6 +48,15 @@ export default function AdminPage() {
                 <span className="sm:hidden">New User</span>
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 border-[#2a2a2a] flex items-center gap-2 hover:text-white"
+              onClick={handleGenerateCode}
+            >
+              <Key className="h-4 w-4" />
+              <span className="hidden sm:inline">Generate Code</span>
+              <span className="sm:hidden">New Code</span>
+            </Button>
           </div>
         </div>
 
@@ -65,12 +79,21 @@ export default function AdminPage() {
             >
               Videos
             </TabsTrigger>
+            <TabsTrigger 
+              value="codes"
+              className="data-[state=active]:bg-[#2a2a2a] data-[state=active]:text-white"
+            >
+              Access Codes
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="users" className="mt-6">
             <UsersOverview />
           </TabsContent>
           <TabsContent value="videos" className="mt-6">
             <VideosOverview />
+          </TabsContent>
+          <TabsContent value="codes" className="mt-6">
+            <CodesOverview />
           </TabsContent>
         </Tabs>
       </div>

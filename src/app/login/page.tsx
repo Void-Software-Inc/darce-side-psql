@@ -96,6 +96,12 @@ export default function LoginPage() {
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
+          <Button
+              className="w-full h-12 text-base font-medium transition-colors"
+              disabled={isLoading}
+              >
+                <Link href="/register">Register with Access Code</Link>
+            </Button>
         </div>
       </Card>
     </div>
