@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useParams } from 'next/navigation';
+import { Heart } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Video {
   id: number;
@@ -17,6 +25,12 @@ interface Video {
   labels?: string[];
   created_at: string;
   created_by: string;
+  likes_count: number;
+}
+
+interface LikeUser {
+  username: string;
+  created_at: string;
 }
 
 function getYouTubePlaylistId(url: string): string | null {
@@ -48,6 +62,11 @@ export default function VideoPage() {
   const [video, setVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [showLikesDialog, setShowLikesDialog] = useState(false);
+  const [likeUsers, setLikeUsers] = useState<LikeUser[]>([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
 
   useEffect(() => {
     async function fetchVideo() {
@@ -58,6 +77,14 @@ export default function VideoPage() {
         }
         const data = await response.json();
         setVideo(data.video);
+        setLikesCount(data.video.likes_count);
+
+        // Check if user has liked this video
+        const likeResponse = await fetch(`/api/videos/likes/get?videoId=${params.id}`);
+        if (likeResponse.ok) {
+          const likeData = await likeResponse.json();
+          setIsLiked(likeData.hasLiked);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load video');
       } finally {
@@ -69,6 +96,48 @@ export default function VideoPage() {
       fetchVideo();
     }
   }, [params.id]);
+
+  const handleLike = async () => {
+    try {
+      const res = await fetch('/api/videos/likes/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ videoId: params.id }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setIsLiked(data.action === 'added');
+        setLikesCount(data.likesCount);
+      }
+    } catch (error) {
+      toast.error('Failed to update like');
+    }
+  };
+
+  const fetchLikeUsers = async () => {
+    setLoadingLikes(true);
+    try {
+      const res = await fetch(`/api/videos/likes/users?videoId=${params.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLikeUsers(data.users);
+      } else {
+        toast.error('Failed to fetch likes');
+      }
+    } catch (error) {
+      toast.error('Failed to fetch likes');
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
+
+  const handleShowLikes = async () => {
+    setShowLikesDialog(true);
+    fetchLikeUsers();
+  };
 
   if (loading) {
     return (
@@ -97,7 +166,25 @@ export default function VideoPage() {
             <YouTubePlaylist playlistUrl={video.playlist_url} />
             
             <div>
-              <h1 className="text-3xl font-bold mb-4">{video.title}</h1>
+              <div className="flex justify-between items-start mb-4">
+                <h1 className="text-3xl font-bold">{video.title}</h1>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleLike}
+                    className="flex items-center text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Heart
+                      className={`h-6 w-6 ${isLiked ? 'fill-red-500 text-red-500' : ''}`}
+                    />
+                  </button>
+                  <button
+                    onClick={handleShowLikes}
+                    className="text-lg text-gray-400 hover:text-white transition-colors"
+                  >
+                    {likesCount}
+                  </button>
+                </div>
+              </div>
               <p className="text-gray-400 whitespace-pre-wrap">{video.description}</p>
             </div>
           </div>
@@ -160,6 +247,34 @@ export default function VideoPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={showLikesDialog} onOpenChange={setShowLikesDialog}>
+        <DialogContent className="bg-[#111] border-gray-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Liked by</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingLikes ? (
+              <div className="flex justify-center py-4">
+                <div className="w-6 h-6 border-2 border-gray-800 border-t-gray-400 rounded-full animate-spin"></div>
+              </div>
+            ) : likeUsers.length === 0 ? (
+              <p className="text-gray-400 text-center py-4">No likes yet</p>
+            ) : (
+              <div className="space-y-3">
+                {likeUsers.map((user, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-white">{user.username}</span>
+                    <span className="text-sm text-gray-400">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
