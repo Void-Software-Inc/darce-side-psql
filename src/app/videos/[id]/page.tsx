@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useRouter } from 'next/navigation';
 
 interface Video {
   id: number;
@@ -67,6 +68,7 @@ export default function VideoPage() {
   const [showLikesDialog, setShowLikesDialog] = useState(false);
   const [likeUsers, setLikeUsers] = useState<LikeUser[]>([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchVideo() {
@@ -264,7 +266,12 @@ export default function VideoPage() {
               <div className="space-y-3">
                 {likeUsers.map((user, index) => (
                   <div key={index} className="flex items-center justify-between">
-                    <span className="text-white">{user.username}</span>
+                    <button
+                      onClick={() => router.push(`/users/${user.username}`)}
+                      className="text-white hover:underline transition-all duration-300"
+                    >
+                      {user.username}
+                    </button>
                     <span className="text-sm text-gray-400">
                       {new Date(user.created_at).toLocaleDateString()}
                     </span>
