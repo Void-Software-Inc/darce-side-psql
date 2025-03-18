@@ -68,6 +68,27 @@ CREATE TABLE IF NOT EXISTS videos (
     labels TEXT[] DEFAULT '{}',
     created_by INTEGER NOT NULL REFERENCES users(id),
     is_active BOOLEAN DEFAULT TRUE,
+    likes_count INTEGER DEFAULT 0,
+    comments_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- New tables for video interactions
+CREATE TABLE IF NOT EXISTS video_likes (
+    id SERIAL PRIMARY KEY,
+    video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(video_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS video_comments (
+    id SERIAL PRIMARY KEY,
+    video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    is_edited BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -85,6 +106,41 @@ CREATE TABLE IF NOT EXISTS role_permissions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (role_id, permission_id)
 );
+
+-- Triggers for video interactions
+CREATE OR REPLACE FUNCTION update_video_likes_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE videos SET likes_count = likes_count + 1 WHERE id = NEW.video_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE videos SET likes_count = likes_count - 1 WHERE id = OLD.video_id;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_video_comments_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE videos SET comments_count = comments_count + 1 WHERE id = NEW.video_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE videos SET comments_count = comments_count - 1 WHERE id = OLD.video_id;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_video_likes_count_trigger
+    AFTER INSERT OR DELETE ON video_likes
+    FOR EACH ROW
+    EXECUTE FUNCTION update_video_likes_count();
+
+CREATE TRIGGER update_video_comments_count_trigger
+    AFTER INSERT OR DELETE ON video_comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_video_comments_count();
 
 -- Access code management functions
 CREATE OR REPLACE FUNCTION verify_access_code(code_to_verify VARCHAR)
@@ -117,7 +173,6 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION handle_user_creation()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Mark the code as used if it exists
     IF current_setting('app.access_code', TRUE) IS NOT NULL THEN
         PERFORM mark_code_as_used(
             current_setting('app.access_code', TRUE),
@@ -158,10 +213,17 @@ CREATE TRIGGER update_videos_modtime
     FOR EACH ROW
     EXECUTE FUNCTION update_modified_column();
 
+CREATE TRIGGER update_comments_modtime
+    BEFORE UPDATE ON video_comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_modified_column();
+
 -- Enable Row Level Security
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE access_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE video_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE video_comments ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for users table
 CREATE POLICY users_view_policy ON users
@@ -251,6 +313,64 @@ CREATE POLICY access_codes_delete_policy ON access_codes
         get_current_user_role() = 'admin'
     );
 
+-- RLS Policies for video_likes table
+CREATE POLICY video_likes_view_policy ON video_likes
+    FOR SELECT
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL
+    );
+
+CREATE POLICY video_likes_insert_policy ON video_likes
+    FOR INSERT
+    TO PUBLIC
+    WITH CHECK (
+        get_current_user_id() IS NOT NULL AND
+        get_current_user_id() = user_id
+    );
+
+CREATE POLICY video_likes_delete_policy ON video_likes
+    FOR DELETE
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL AND
+        get_current_user_id() = user_id
+    );
+
+-- RLS Policies for video_comments table
+CREATE POLICY video_comments_view_policy ON video_comments
+    FOR SELECT
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL
+    );
+
+CREATE POLICY video_comments_insert_policy ON video_comments
+    FOR INSERT
+    TO PUBLIC
+    WITH CHECK (
+        get_current_user_id() IS NOT NULL AND
+        get_current_user_id() = user_id
+    );
+
+CREATE POLICY video_comments_update_policy ON video_comments
+    FOR UPDATE
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL AND
+        get_current_user_id() = user_id
+    );
+
+CREATE POLICY video_comments_delete_policy ON video_comments
+    FOR DELETE
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL AND (
+            get_current_user_id() = user_id OR
+            get_current_user_role() = 'admin'
+        )
+    );
+
 -- Insert default roles
 INSERT INTO roles (name, description) VALUES
     ('admin', 'Administrator with full access'),
@@ -262,7 +382,9 @@ INSERT INTO permissions (name, description) VALUES
     ('view', 'Can view resources'),
     ('create', 'Can create new resources'),
     ('update', 'Can update existing resources'),
-    ('delete', 'Can delete resources')
+    ('delete', 'Can delete resources'),
+    ('like', 'Can like videos'),
+    ('comment', 'Can comment on videos')
 ON CONFLICT (name) DO NOTHING;
 
 -- Assign permissions to roles
@@ -274,11 +396,13 @@ SELECT
 FROM permissions
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
--- User role gets only view permission
+-- User role gets view, like, and comment permissions
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 
     (SELECT id FROM roles WHERE name = 'user'),
-    (SELECT id FROM permissions WHERE name = 'view')
+    id
+FROM permissions 
+WHERE name IN ('view', 'like', 'comment')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Create default admin user (password: admin123)

@@ -22,35 +22,30 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-    
-    // Get the user from the database
-    const user = await getUserById(decoded.userId);
-    
-    if (!user) {
+
+    // Get video ID from URL
+    const url = new URL(request.url);
+    const videoId = url.searchParams.get('videoId');
+
+    if (!videoId) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
-        { status: 404 }
+        { success: false, message: 'Video ID is required' },
+        { status: 400 }
       );
     }
-    
-    // Get all active tournament videos with creator information
-    const videosResult = await query(
-      `SELECT v.id, v.title, v.description, v.image_url, v.playlist_url, 
-              v.type, v.author, v.number_of_videos, v.labels,
-              v.created_at, u.username as created_by, v.likes_count
-       FROM videos v
-       JOIN users u ON v.created_by = u.id
-       WHERE v.is_active = true AND v.type = 'tournament'
-       ORDER BY v.created_at DESC`
+
+    // Check if user has liked the video
+    const likeResult = await query(
+      'SELECT id FROM video_likes WHERE video_id = $1 AND user_id = $2',
+      [videoId, decoded.userId]
     );
-    
-    // Return the videos
+
     return NextResponse.json({
       success: true,
-      videos: videosResult.rows
+      hasLiked: likeResult?.rowCount ?? 0 > 0
     });
   } catch (error) {
-    console.error('Error getting tournament videos:', error);
+    console.error('Error checking video like:', error);
     return NextResponse.json(
       { success: false, message: 'An error occurred' },
       { status: 500 }

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Heart } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface User {
   id: number;
@@ -25,10 +27,66 @@ interface Video {
   labels?: string[];
   created_at: string;
   created_by: string;
+  likes_count: number;
 }
 
 function VideoGrid({ videos }: { videos: Video[] }) {
   const router = useRouter();
+  const [likedVideos, setLikedVideos] = useState<Record<number, boolean>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    // Initialize like counts from videos
+    const initialLikeCounts = videos.reduce((acc, video) => {
+      acc[video.id] = video.likes_count;
+      return acc;
+    }, {} as Record<number, number>);
+    setLikeCounts(initialLikeCounts);
+
+    // Check which videos are liked by the current user
+    videos.forEach(async (video) => {
+      try {
+        const res = await fetch(`/api/videos/likes/get?videoId=${video.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLikedVideos(prev => ({
+            ...prev,
+            [video.id]: data.hasLiked
+          }));
+        }
+      } catch (error) {
+        console.error('Error checking video like:', error);
+      }
+    });
+  }, [videos]);
+
+  const handleLike = async (e: React.MouseEvent, videoId: number) => {
+    e.stopPropagation(); // Prevent navigation when clicking the like button
+    
+    try {
+      const res = await fetch('/api/videos/likes/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ videoId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setLikedVideos(prev => ({
+          ...prev,
+          [videoId]: data.action === 'added'
+        }));
+        setLikeCounts(prev => ({
+          ...prev,
+          [videoId]: data.likesCount
+        }));
+      }
+    } catch (error) {
+      toast.error('Failed to update like');
+    }
+  };
 
   if (videos.length === 0) {
     return (
@@ -58,7 +116,20 @@ function VideoGrid({ videos }: { videos: Video[] }) {
           </div>
           <div className="p-3">
             <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
-            <p className="text-xs text-gray-400">by {video.author}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400">by {video.author}</p>
+              <button
+                onClick={(e) => handleLike(e, video.id)}
+                className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <Heart
+                  className={`h-4 w-4 ${
+                    likedVideos[video.id] ? 'fill-red-500 text-red-500' : 'fill-none'
+                  }`}
+                />
+                <span>{likeCounts[video.id] || 0}</span>
+              </button>
+            </div>
           </div>
         </Card>
       ))}
