@@ -7,6 +7,12 @@ import Image from 'next/image';
 import { CalendarDays, Heart, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Function to trim titles to match "Higher Tripod Passing" length (20 characters)
+const trimTitle = (title: string, maxLength: number = 21) => {
+  if (title.length <= maxLength) return title;
+  return title.slice(0, maxLength - 3) + "...";
+};
+
 interface Video {
   id: number;
   title: string;
@@ -170,7 +176,7 @@ export default function UserProfilePage() {
                 <Card 
                   key={video.id} 
                   className="bg-[#111] border-gray-800 overflow-hidden flex flex-col cursor-pointer hover:border-gray-600 transition-colors"
-                  onClick={() => router.push(`/videos/${video.id}`)}
+                  onClick={() => router.push(`/videos/${video.id}?title=${encodeURIComponent(video.title)}`)}
                 >
                   <div className="relative aspect-square w-full bg-[#111]">
                     <Image
@@ -183,7 +189,7 @@ export default function UserProfilePage() {
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
+                    <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{trimTitle(video.title)}</h3>
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-gray-400">by {video.author}</p>
                       <div className="flex items-center gap-3">

@@ -1,14 +1,21 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useMeasure from "react-use-measure";
 import { Card } from "@/components/ui/card";
 import { Heart, MessageSquare, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const BREAKPOINTS = {
   sm: 640,
   lg: 1024,
+};
+
+// Function to trim titles to match "Higher Tripod Passing" length (20 characters)
+const trimTitle = (title: string, maxLength: number = 21) => {
+  if (title.length <= maxLength) return title;
+  return title.slice(0, maxLength - 3) + "...";
 };
 
 interface Video {
@@ -119,6 +126,47 @@ export const VideoCarousel = ({ title, videos, type }: VideoCarouselProps) => {
 
 const VideoCard = ({ video, width, margin }: { video: Video; width: number; margin: number }) => {
   const router = useRouter();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(video.likes_count);
+
+  useEffect(() => {
+    // Check if user has liked this video
+    const checkLike = async () => {
+      try {
+        const res = await fetch(`/api/videos/likes/get?videoId=${video.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setIsLiked(data.hasLiked);
+        }
+      } catch (error) {
+        console.error('Error checking video like:', error);
+      }
+    };
+    
+    checkLike();
+  }, [video.id]);
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking the like button
+    
+    try {
+      const res = await fetch('/api/videos/likes/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ videoId: video.id }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setIsLiked(data.action === 'added');
+        setLikesCount(data.likesCount);
+      }
+    } catch (error) {
+      toast.error('Failed to update like');
+    }
+  };
 
   return (
     <Card
@@ -139,7 +187,7 @@ const VideoCard = ({ video, width, margin }: { video: Video; width: number; marg
         />
       </div>
       <div className="p-3">
-        <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
+        <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{trimTitle(video.title)}</h3>
         <div className="flex items-center justify-between">
           <p className="text-xs text-gray-400">by {video.author}</p>
           <div className="flex items-center gap-3">
@@ -147,10 +195,17 @@ const VideoCard = ({ video, width, margin }: { video: Video; width: number; marg
               <MessageSquare className="h-4 w-4" />
               {video.comments_count || 0}
             </span>
-            <span className="flex items-center gap-1 text-sm text-gray-400">
-              <Heart className="h-4 w-4" />
-              {video.likes_count || 0}
-            </span>
+            <button
+              onClick={handleLike}
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+            >
+              <Heart
+                className={`h-4 w-4 ${
+                  isLiked ? 'fill-red-500 text-red-500' : 'fill-none'
+                }`}
+              />
+              <span>{likesCount}</span>
+            </button>
           </div>
         </div>
       </div>

@@ -27,6 +27,12 @@ interface Video {
 
 type VideoType = 'all' | 'instructionals' | 'matches' | 'tournaments';
 
+// Function to trim titles to match "Higher Tripod Passing" length (20 characters)
+const trimTitle = (title: string, maxLength: number = 21) => {
+  if (title.length <= maxLength) return title;
+  return title.slice(0, maxLength - 3) + "...";
+};
+
 function VideoGrid({ videos }: { videos: Video[] }) {
   const router = useRouter();
   const [likedVideos, setLikedVideos] = useState<Record<number, boolean>>({});
@@ -112,7 +118,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
             />
           </div>
           <div className="p-3">
-            <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
+            <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{trimTitle(video.title)}</h3>
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-400">by {video.author}</p>
               <div className="flex items-center gap-3">
