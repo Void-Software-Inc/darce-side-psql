@@ -208,7 +208,7 @@ export default function UsersOverview() {
                     <TableCell className="text-gray-200 py-3 hidden sm:table-cell">
                       {new Date(user.created_at).toLocaleString()}
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="py-3 text-left">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -263,7 +263,7 @@ export default function UsersOverview() {
           setDeleteDialog(prev => ({ ...prev, isOpen }))
         }
       >
-        <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200 mx-4">
+        <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200 mx-auto">
           <DialogHeader>
             <DialogTitle className="text-white">Delete User</DialogTitle>
             <DialogDescription className="text-gray-400">

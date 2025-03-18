@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 interface RegistrationFormData {
   username: string;
@@ -14,9 +15,10 @@ interface RegistrationFormData {
 
 interface RegistrationFormStepProps {
   accessCode: string;
+  onRegistered: () => void;
 }
 
-export default function RegistrationFormStep({ accessCode }: RegistrationFormStepProps) {
+export default function RegistrationFormStep({ accessCode, onRegistered }: RegistrationFormStepProps) {
   const router = useRouter();
   const [formData, setFormData] = useState<RegistrationFormData>({
     username: '',
@@ -51,6 +53,7 @@ export default function RegistrationFormStep({ accessCode }: RegistrationFormSte
         throw new Error(data.message);
       }
 
+      onRegistered();
       toast.success('Registration successful');
       router.push('/login');
     } catch (error: any) {
@@ -113,13 +116,13 @@ export default function RegistrationFormStep({ accessCode }: RegistrationFormSte
           />
         </div>
       </div>
-      <div className="flex justify-end">
-        <button
+      <div className="flex justify-end pt-2">
+        <Button
           onClick={handleRegister}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
+          className="bg-black hover:bg-[#222222] text-white border border-[#2a2a2a]"
         >
           Create Account
-        </button>
+        </Button>
       </div>
     </motion.div>
   );

@@ -3,14 +3,16 @@ import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface CodeVerificationStepProps {
   onVerified: () => void;
   onCodeChange: (code: string) => void;
   accessCode: string;
+  onBack: () => void;
 }
 
-export default function CodeVerificationStep({ onVerified, onCodeChange, accessCode }: CodeVerificationStepProps) {
+export default function CodeVerificationStep({ onVerified, onCodeChange, accessCode, onBack }: CodeVerificationStepProps) {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const verifyCode = async () => {
@@ -66,14 +68,21 @@ export default function CodeVerificationStep({ onVerified, onCodeChange, accessC
           className="bg-[#222222] border-[#2a2a2a] text-white"
         />
       </div>
-      <div className="flex justify-end">
-        <button
+      <div className="flex items-center justify-between gap-4 pt-2">
+        <Button
+          variant="outline"
+          className="bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 border-[#2a2a2a]"
+          onClick={onBack}
+        >
+          Back to Login
+        </Button>
+        <Button
           onClick={handleNext}
           disabled={isVerifying}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
+          className="bg-black hover:bg-[#222222] text-white border border-[#2a2a2a]"
         >
           {isVerifying ? 'Verifying...' : 'Verify Code'}
-        </button>
+        </Button>
       </div>
     </motion.div>
   );

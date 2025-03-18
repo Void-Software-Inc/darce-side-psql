@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import CodeVerificationStep from './components/code-verification-step';
 import RegistrationFormStep from './components/registration-form-step';
@@ -11,35 +10,37 @@ import React from 'react';
 export default function RegisterPage() {
   const [step, setStep] = useState(0);
   const [accessCode, setAccessCode] = useState('');
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const router = useRouter();
+
+  const handleStepComplete = (stepNumber: number) => {
+    setCompletedSteps(prev => [...prev, stepNumber]);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#111111] p-4">
-      <div className="w-full max-w-2xl bg-[#1a1a1a] rounded-lg shadow-xl p-8">
-        <Steps numSteps={2} stepsComplete={step} />
+      <div className="w-full max-w-md bg-[#1a1a1a] rounded-lg shadow-xl p-6">
+        <Steps numSteps={2} currentStep={step} completedSteps={completedSteps} />
         
-        <div className="mt-8 mb-6">
+        <div className="mt-6">
           <AnimatePresence mode="wait">
             {step === 0 ? (
               <CodeVerificationStep
                 accessCode={accessCode}
                 onCodeChange={setAccessCode}
-                onVerified={() => setStep(1)}
+                onVerified={() => {
+                  handleStepComplete(0);
+                  setStep(1);
+                }}
+                onBack={() => router.push('/login')}
               />
             ) : (
-              <RegistrationFormStep accessCode={accessCode} />
+              <RegistrationFormStep 
+                accessCode={accessCode} 
+                onRegistered={() => handleStepComplete(1)}
+              />
             )}
           </AnimatePresence>
-        </div>
-
-        <div className="flex items-center justify-between gap-4">
-          <Button
-            variant="outline"
-            className="bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 border-[#2a2a2a]"
-            onClick={() => router.push('/login')}
-          >
-            Back to Login
-          </Button>
         </div>
       </div>
     </div>
@@ -48,10 +49,12 @@ export default function RegisterPage() {
 
 const Steps = ({
   numSteps,
-  stepsComplete,
+  currentStep,
+  completedSteps,
 }: {
   numSteps: number;
-  stepsComplete: number;
+  currentStep: number;
+  completedSteps: number[];
 }) => {
   const stepArray = Array.from(Array(numSteps).keys());
 
@@ -59,15 +62,16 @@ const Steps = ({
     <div className="flex items-center justify-between gap-3">
       {stepArray.map((num) => {
         const stepNum = num + 1;
-        const isActive = stepNum <= stepsComplete + 1;
+        const isCompleted = completedSteps.includes(num);
+        const isActive = num === currentStep || isCompleted;
         return (
           <React.Fragment key={stepNum}>
-            <Step num={stepNum} isActive={isActive} />
+            <Step num={stepNum} isActive={isActive} isCompleted={isCompleted} />
             {stepNum !== stepArray.length && (
               <div className="w-full h-1 rounded-full bg-[#2a2a2a] relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 left-0 bg-indigo-600 rounded-full"
-                  animate={{ width: isActive ? "100%" : 0 }}
+                  className="absolute top-0 bottom-0 left-0 bg-black rounded-full"
+                  animate={{ width: isCompleted ? "100%" : 0 }}
                   transition={{ ease: "easeIn", duration: 0.3 }}
                 />
               </div>
@@ -79,18 +83,18 @@ const Steps = ({
   );
 };
 
-const Step = ({ num, isActive }: { num: number; isActive: boolean }) => {
+const Step = ({ num, isActive, isCompleted }: { num: number; isActive: boolean; isCompleted: boolean }) => {
   return (
     <div className="relative">
       <div
         className={`w-10 h-10 flex items-center justify-center shrink-0 border-2 rounded-full font-semibold text-sm relative z-10 transition-colors duration-300 ${
           isActive
-            ? "border-indigo-600 bg-indigo-600 text-white"
+            ? "border-black bg-black text-white"
             : "border-[#2a2a2a] text-gray-500"
         }`}
       >
         <AnimatePresence mode="wait">
-          {isActive ? (
+          {isCompleted ? (
             <motion.svg
               key="icon-marker-check"
               stroke="currentColor"
@@ -120,8 +124,8 @@ const Step = ({ num, isActive }: { num: number; isActive: boolean }) => {
           )}
         </AnimatePresence>
       </div>
-      {isActive && (
-        <div className="absolute z-0 -inset-1.5 bg-indigo-600/20 rounded-full animate-pulse" />
+      {isActive && !isCompleted && (
+        <div className="absolute z-0 -inset-1.5 bg-black/20 rounded-full animate-pulse" />
       )}
     </div>
   );

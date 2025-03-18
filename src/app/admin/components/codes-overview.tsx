@@ -148,7 +148,7 @@ export default function CodesOverview() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hover:bg-red-900/30 hover:text-red-400"
+                  className="hover:bg-red-900/30 hover:text-red-400 text-white"
                   onClick={() => deleteCode(code.id)}
                 >
                   <Trash2 className="h-4 w-4" />
