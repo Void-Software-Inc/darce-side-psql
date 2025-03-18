@@ -6,8 +6,10 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { VideoGridSkeleton } from './components/video-skeleton';
 import { useRouter } from 'next/navigation';
-import { Heart, MessageSquare } from 'lucide-react';
+import { Heart, MessageSquare, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from '@/lib/hooks/use-debounce';
 
 interface Video {
   id: number;
@@ -94,7 +96,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
   if (videos.length === 0) {
     return (
       <Card className="p-6 bg-[#111] border-gray-800">
-        <p className="text-gray-400 text-center">No videos available yet.</p>
+        <p className="text-gray-400 text-center">No videos available.</p>
       </Card>
     );
   }
@@ -150,6 +152,11 @@ export default function VideosPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<VideoType>('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [selectedAuthor, setSelectedAuthor] = useState<string>('');
+  
+  // Debounce the search input with a 300ms delay
+  const searchQuery = useDebounce(searchInput, 300);
 
   const fetchVideos = async (type: VideoType) => {
     setLoading(true);
@@ -176,6 +183,16 @@ export default function VideosPage() {
     fetchVideos(selectedType);
   }, [selectedType]);
 
+  // Get unique authors from videos
+  const authors = [...new Set(videos.map(video => video.author))].sort();
+
+  // Filter videos based on search query and selected author
+  const filteredVideos = videos.filter(video => {
+    const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesAuthor = !selectedAuthor || video.author === selectedAuthor;
+    return matchesSearch && matchesAuthor;
+  });
+
   const filterButtons: { type: VideoType; label: string }[] = [
     { type: 'all', label: 'All Videos' },
     { type: 'instructionals', label: 'Instructionals' },
@@ -189,28 +206,57 @@ export default function VideosPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6">Video Library</h1>
           
-          {/* Filter Buttons */}
-          <div className="flex flex-wrap gap-2">
-            {filterButtons.map(({ type, label }) => (
-              <Button
-                key={type}
-                variant={selectedType === type ? "default" : "outline"}
-                className={`
-                  ${selectedType === type 
-                    ? 'bg-white text-black hover:bg-gray-200' 
-                    : 'bg-transparent border-gray-800 text-gray-400 hover:text-white hover:bg-[#111]'}
-                  transition-all duration-200
-                `}
-                onClick={() => setSelectedType(type)}
+          {/* Search and Filter Section */}
+          <div className="space-y-4">
+            {/* Filter Buttons */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+              {filterButtons.map(({ type, label }) => (
+                <Button
+                  key={type}
+                  variant={selectedType === type ? "default" : "outline"}
+                  className={`
+                    w-full sm:w-auto
+                    ${selectedType === type 
+                      ? 'bg-white text-black hover:bg-gray-200' 
+                      : 'bg-[#111] border-gray-800 text-gray-400 hover:text-white hover:bg-[#222]'}
+                    transition-all duration-200 text-sm
+                  `}
+                  onClick={() => setSelectedType(type)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+
+            {/* Search and Author Filter */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Search videos..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-10 bg-[#111] border-gray-800 text-gray-200 w-full"
+                />
+              </div>
+              <select
+                value={selectedAuthor}
+                onChange={(e) => setSelectedAuthor(e.target.value)}
+                className="bg-[#111] border border-gray-800 rounded-md px-3 py-2 text-gray-200 w-full sm:w-48"
               >
-                {label}
-              </Button>
-            ))}
+                <option value="">All Authors</option>
+                {authors.map(author => (
+                  <option key={author} value={author}>{author}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Videos Grid with Skeleton Loading */}
-        {loading ? <VideoGridSkeleton /> : <VideoGrid videos={videos} />}
+        {loading ? <VideoGridSkeleton /> : <VideoGrid videos={filteredVideos} />}
+
       </div>
     </div>
   );
