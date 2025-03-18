@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Heart, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { VideoCarousel } from '@/components/VideoCarousel';
 
 interface User {
   id: number;
@@ -233,22 +234,31 @@ export default function Home() {
         </div>
 
         {/* Instructionals Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Available Instructionals</h2>
-          <VideoGrid videos={instructionals} />
-        </div>
+        {instructionals.length > 0 && (
+          <VideoCarousel
+            title="Instructionals"
+            videos={instructionals}
+            type="instructionals"
+          />
+        )}
 
         {/* Matches Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Available Matches</h2>
-          <VideoGrid videos={matches} />
-        </div>
+        {matches.length > 0 && (
+          <VideoCarousel
+            title="Matches"
+            videos={matches}
+            type="matches"
+          />
+        )}
 
         {/* Tournaments Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Available Tournaments</h2>
-          <VideoGrid videos={tournaments} />
-        </div>
+        {tournaments.length > 0 && (
+          <VideoCarousel
+            title="Tournaments"
+            videos={tournaments}
+            type="tournaments"
+          />
+        )}
       </div>
     </div>
   );
