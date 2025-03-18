@@ -124,7 +124,7 @@ export function Comments({ videoId }: CommentsProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold">Comments</h2>
+      <h2 className="text-2xl font-semibold">Comments ({comments.length})</h2>
       
       {/* Add Comment */}
       <div className="space-y-4">
@@ -175,7 +175,7 @@ export function Comments({ videoId }: CommentsProps) {
                   {(currentUserRole === 'admin' || currentUserId === comment.user_id) && (
                     <button
                       onClick={() => handleDeleteComment(comment.id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                       title="Delete comment"
                     >
                       <Trash2 className="h-4 w-4" />

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Heart } from 'lucide-react';
+import { Heart, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface User {
@@ -28,6 +28,7 @@ interface Video {
   created_at: string;
   created_by: string;
   likes_count: number;
+  comments_count: number;
 }
 
 function VideoGrid({ videos }: { videos: Video[] }) {
@@ -118,17 +119,23 @@ function VideoGrid({ videos }: { videos: Video[] }) {
             <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-400">by {video.author}</p>
-              <button
-                onClick={(e) => handleLike(e, video.id)}
-                className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <Heart
-                  className={`h-4 w-4 ${
-                    likedVideos[video.id] ? 'fill-red-500 text-red-500' : 'fill-none'
-                  }`}
-                />
-                <span>{likeCounts[video.id] || 0}</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1 text-sm text-gray-400">
+                  <MessageSquare className="h-4 w-4" />
+                  {video.comments_count || 0}
+                </span>
+                <button
+                  onClick={(e) => handleLike(e, video.id)}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  <Heart
+                    className={`h-4 w-4 ${
+                      likedVideos[video.id] ? 'fill-red-500 text-red-500' : 'fill-none'
+                    }`}
+                  />
+                  <span>{likeCounts[video.id] || 0}</span>
+                </button>
+              </div>
             </div>
           </div>
         </Card>

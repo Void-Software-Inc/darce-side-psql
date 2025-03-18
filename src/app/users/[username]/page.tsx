@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { CalendarDays, Heart, Clock } from 'lucide-react';
+import { CalendarDays, Heart, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Video {
@@ -19,12 +18,14 @@ interface Video {
   created_by: string;
   liked_at: string;
   likes_count: number;
+  comments_count: number;
 }
 
 interface UserProfile {
   username: string;
   created_at: string;
   likes_given: number;
+  comments_count: number;
   liked_videos: Video[];
   is_current_user: boolean;
 }
@@ -147,6 +148,10 @@ export default function UserProfilePage() {
                   <Heart className="h-4 w-4" />
                   <span>{profile.likes_given} likes given</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{profile.comments_count} comments</span>
+                </div>
               </div>
             </div>
           </div>
@@ -178,25 +183,25 @@ export default function UserProfilePage() {
                     />
                   </div>
                   <div className="p-3">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="text-lg font-semibold text-white line-clamp-2 flex-1">{video.title}</h3>
-                      <button
-                        onClick={(e) => handleLike(video.id, e)}
-                        className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors ml-2"
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${
-                            likedVideos[video.id] ? 'fill-red-500 text-red-500' : ''
-                          }`}
-                        />
-                        <span className="text-sm">{likeCounts[video.id] || video.likes_count}</span>
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span>by {video.author}</span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{new Date(video.liked_at).toLocaleDateString()}</span>
+                    <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-400">by {video.author}</p>
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1 text-sm text-gray-400">
+                          <MessageSquare className="h-4 w-4" />
+                          {video.comments_count || 0}
+                        </span>
+                        <button
+                          onClick={(e) => handleLike(video.id, e)}
+                          className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                        >
+                          <Heart
+                            className={`h-4 w-4 ${
+                              likedVideos[video.id] ? 'fill-red-500 text-red-500' : 'fill-none'
+                            }`}
+                          />
+                          <span>{likeCounts[video.id] || 0}</span>
+                        </button>
                       </div>
                     </div>
                   </div>

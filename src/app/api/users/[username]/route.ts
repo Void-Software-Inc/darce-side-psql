@@ -47,7 +47,7 @@ export async function GET(
     const likedVideosResult = await query(
       `SELECT v.id, v.title, v.description, v.image_url, v.type, 
               v.author, v.created_at, u.username as created_by,
-              vl.created_at as liked_at, v.likes_count
+              vl.created_at as liked_at, v.likes_count, v.comments_count
        FROM video_likes vl
        JOIN videos v ON vl.video_id = v.id
        JOIN users u ON v.created_by = u.id
@@ -59,6 +59,12 @@ export async function GET(
     // Get total likes given and received
     const likesGivenCount = await query(
       'SELECT COUNT(*) FROM video_likes WHERE user_id = $1',
+      [user.id]
+    );
+
+    // Get total comments made by the user
+    const commentsCount = await query(
+      'SELECT COUNT(*) FROM video_comments WHERE user_id = $1',
       [user.id]
     );
 
@@ -76,6 +82,7 @@ export async function GET(
         username: user.username,
         created_at: user.created_at,
         likes_given: parseInt(likesGivenCount.rows[0].count),
+        comments_count: parseInt(commentsCount.rows[0].count),
         liked_videos: likedVideosResult.rows,
         is_current_user: isCurrentUser
       }
