@@ -1,23 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is not set');
+}
 
-export async function GET(request: NextRequest) {
+const JWT_SECRET = process.env.JWT_SECRET;
+
+interface JWTPayload {
+  role?: string;
+}
+
+export async function GET(req: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
-    
+    const token = req.cookies.get('token')?.value;
+
     if (!token) {
-      return NextResponse.json({ isAdmin: false }, { status: 401 });
+      return NextResponse.json({ isAdmin: false });
     }
+
+    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    const isAdmin = decoded.roleId === 1 || decoded.role === 'admin';
-    
-    return NextResponse.json({ isAdmin });
-    
+    if (!decoded || !decoded.role) {
+      return NextResponse.json({ isAdmin: false });
+    }
+
+    return NextResponse.json({ isAdmin: decoded.role === 'admin' });
   } catch (error) {
-    console.error('Admin check error:', error);
-    return NextResponse.json({ isAdmin: false }, { status: 401 });
+    console.error('Error checking admin status:', error);
+    return NextResponse.json({ isAdmin: false });
   }
 } 

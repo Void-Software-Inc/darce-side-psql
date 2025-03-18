@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UsersOverview from './components/users-overview';
 import VideosOverview from './components/videos-overview';
+import Link from 'next/link';
+import { Plus, UserPlus, Video } from 'lucide-react';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
@@ -12,11 +14,39 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-gray-400">Manage users and videos</p>
+        {/* Header with Create Buttons */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Admin Dashboard</h1>
+            <p className="text-gray-400">Manage users and videos</p>
+          </div>
+
+          {/* Create Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link href="/admin/create-video" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="w-full bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 border-[#2a2a2a] flex items-center gap-2 hover:text-white"
+              >
+                <Video className="h-4 w-4" />
+                <span className="hidden sm:inline">Create Video</span>
+                <span className="sm:hidden">New Video</span>
+              </Button>
+            </Link>
+            <Link href="/admin/create-user" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="w-full bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 border-[#2a2a2a] flex items-center gap-2 hover:text-white"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Create User</span>
+                <span className="sm:hidden">New User</span>
+              </Button>
+            </Link>
+          </div>
         </div>
 
+        {/* Tabs */}
         <Tabs 
           value={activeTab} 
           onValueChange={setActiveTab}

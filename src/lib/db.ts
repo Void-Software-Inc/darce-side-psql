@@ -1,11 +1,12 @@
 import { Pool } from 'pg';
 
-// Database connection configuration using the provided connection URL
-const connectionString = 'postgres://postgres:BkFHA2uFkJj2a8mWSDr3idRQPwyYhc1r4nrcL7YTHHeq03e5O71tninpzcpFtniE@116.203.30.228:5432/postgres';
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
 
 // Create a new PostgreSQL connection pool
 const pool = new Pool({
-  connectionString,
+  connectionString: process.env.DATABASE_URL,
 });
 
 // Test the connection
