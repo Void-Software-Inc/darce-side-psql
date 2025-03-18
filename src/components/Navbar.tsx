@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Breadcrumb,
@@ -28,6 +28,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Close menu when route changes
   useEffect(() => {
@@ -100,7 +101,15 @@ export default function Navbar() {
           {paths.map((path, index) => {
             const href = `/${paths.slice(0, index + 1).join('/')}`;
             const isLast = index === paths.length - 1;
-            const displayText = path.charAt(0).toUpperCase() + path.slice(1);
+            let displayText = path.charAt(0).toUpperCase() + path.slice(1);
+
+            // If this is a video ID and we have the title in URL state, use it
+            if (paths[0] === 'videos' && index === 1) {
+              const videoTitle = searchParams.get('title');
+              if (videoTitle) {
+                displayText = videoTitle;
+              }
+            }
 
             // On mobile, only show if it's the last item
             if (isLast) {
@@ -152,7 +161,7 @@ export default function Navbar() {
             <Link href="/videos">
               <Button 
                 variant="ghost" 
-                className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300"
+                className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
               >
                 Videos
               </Button>
@@ -161,15 +170,23 @@ export default function Navbar() {
               <Link href="/admin">
                 <Button 
                   variant="ghost" 
-                  className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300"
+                  className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
                 >
                   Dashboard
                 </Button>
               </Link>
             )}
+            <Link href={`/users/${user?.username}`}>
+              <Button 
+                variant="ghost" 
+                className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
+              >
+                Profile
+              </Button>
+            </Link>
             <Button 
               variant="ghost" 
-              className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300"
+              className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
               onClick={handleLogout}
             >
               Logout
@@ -207,6 +224,14 @@ export default function Navbar() {
                   </Button>
                 </Link>
               )}
+              <Link href={`/users/${user?.username}`} className="w-full">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
+                >
+                  Profile
+                </Button>
+              </Link>
               <Button 
                 variant="ghost" 
                 className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
@@ -219,7 +244,7 @@ export default function Navbar() {
         )}
       </nav>
       {/* Spacer to prevent content from going under fixed navbar */}
-      <div className={`h-16 ${isMenuOpen ? (isAdmin ? 'md:h-16 h-[144px]' : 'md:h-16 h-[96px]') : 'h-16'}`} />
+      <div className={`h-16 ${isMenuOpen ? (isAdmin ? 'md:h-16 h-[192px]' : 'md:h-16 h-[144px]') : 'h-16'}`} />
     </>
   );
 } 

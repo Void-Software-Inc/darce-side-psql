@@ -102,7 +102,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
         <Card 
           key={video.id} 
           className="bg-[#111] border-gray-800 overflow-hidden flex flex-col cursor-pointer hover:border-gray-600 transition-colors"
-          onClick={() => router.push(`/videos/${video.id}`)}
+          onClick={() => router.push(`/videos/${video.id}?title=${encodeURIComponent(video.title)}`)}
         >
           <div className="relative aspect-square w-full bg-[#111]">
             <Image
