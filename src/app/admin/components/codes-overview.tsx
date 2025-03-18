@@ -123,8 +123,47 @@ export default function CodesOverview() {
 
   if (loading) {
     return (
-      <div className="w-full h-48 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      <div className="rounded-md border border-[#2a2a2a]">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-[#2a2a2a] hover:bg-transparent">
+              <TableHead className="text-gray-400">Code</TableHead>
+              <TableHead className="text-gray-400">Created By</TableHead>
+              <TableHead className="text-gray-400">Created At</TableHead>
+              <TableHead className="text-gray-400">Status</TableHead>
+              <TableHead className="text-gray-400">Used By</TableHead>
+              <TableHead className="text-gray-400">Used At</TableHead>
+              <TableHead className="text-gray-400 w-[100px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...Array(5)].map((_, index) => (
+              <TableRow key={index} className="border-b border-[#2a2a2a] hover:bg-[#2a2a2a]">
+                <TableCell>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-24"></div>
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-20"></div>
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-24"></div>
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 bg-gray-800 rounded animate-pulse w-8"></div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     );
   }
