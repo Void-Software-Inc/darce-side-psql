@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById } from '@/lib/auth';
 import { query } from '@/lib/db';
 
+function generateCode(): string {
+  const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return code;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get the token from cookies
@@ -41,10 +50,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a random 8-digit code
-    const min = 10000000;
-    const max = 99999999;
-    const code = Math.floor(Math.random() * (max - min + 1) + min).toString();
+    // Generate a new code
+    const code = generateCode();
 
     // Insert the new code
     const result = await query(

@@ -10,9 +10,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Copy, Check } from 'lucide-react';
 
 interface AccessCode {
   id: number;
@@ -27,6 +35,19 @@ interface AccessCode {
 export default function CodesOverview() {
   const [codes, setCodes] = useState<AccessCode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generateDialog, setGenerateDialog] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const copyToClipboard = async (code: string, id: number) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedId(id);
+      toast.success('Code copied to clipboard');
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      toast.error('Failed to copy code');
+    }
+  };
 
   const fetchCodes = async () => {
     try {
@@ -92,7 +113,7 @@ export default function CodesOverview() {
   // Listen for generate-code event from parent
   useEffect(() => {
     const handleGenerateCode = () => {
-      generateCode();
+      setGenerateDialog(true);
     };
     document.addEventListener('generate-code', handleGenerateCode);
     return () => {
@@ -109,62 +130,112 @@ export default function CodesOverview() {
   }
 
   return (
-    <div className="rounded-md border border-[#2a2a2a]">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-b border-[#2a2a2a] hover:bg-transparent">
-            <TableHead className="text-gray-400">Code</TableHead>
-            <TableHead className="text-gray-400">Created By</TableHead>
-            <TableHead className="text-gray-400">Created At</TableHead>
-            <TableHead className="text-gray-400">Status</TableHead>
-            <TableHead className="text-gray-400">Used By</TableHead>
-            <TableHead className="text-gray-400">Used At</TableHead>
-            <TableHead className="text-gray-400 w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {codes.map((code) => (
-            <TableRow key={code.id} className="border-b border-[#2a2a2a] hover:bg-[#2a2a2a]">
-              <TableCell className="font-mono text-white">{code.code}</TableCell>
-              <TableCell className="text-white">{code.created_by}</TableCell>
-              <TableCell className="text-white">{format(new Date(code.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
-              <TableCell>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  code.is_used 
-                    ? 'bg-red-900/30 text-red-400'
-                    : 'bg-green-900/30 text-green-400'
-                }`}>
-                  {code.is_used ? 'Used' : 'Available'}
-                </span>
-              </TableCell>
-              <TableCell className="text-white">{code.used_by || '-'}</TableCell>
-              <TableCell className="text-white">
-                {code.used_at 
-                  ? format(new Date(code.used_at), 'MMM d, yyyy HH:mm')
-                  : '-'
-                }
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-red-900/30 hover:text-red-400 text-white"
-                  onClick={() => deleteCode(code.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
+    <>
+      <div className="rounded-md border border-[#2a2a2a]">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-b border-[#2a2a2a] hover:bg-transparent">
+              <TableHead className="text-gray-400">Code</TableHead>
+              <TableHead className="text-gray-400">Created By</TableHead>
+              <TableHead className="text-gray-400">Created At</TableHead>
+              <TableHead className="text-gray-400">Status</TableHead>
+              <TableHead className="text-gray-400">Used By</TableHead>
+              <TableHead className="text-gray-400">Used At</TableHead>
+              <TableHead className="text-gray-400 w-[100px]">Actions</TableHead>
             </TableRow>
-          ))}
-          {codes.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center text-white py-8">
-                No access codes found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {codes.map((code) => (
+              <TableRow key={code.id} className="border-b border-[#2a2a2a] hover:bg-[#2a2a2a]">
+                <TableCell className="font-mono text-white flex items-center gap-2">
+                  {code.code}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 hover:bg-white/10"
+                    onClick={() => copyToClipboard(code.code, code.id)}
+                  >
+                    {copiedId === code.id ? (
+                      <Check className="h-3 w-3 text-green-400" />
+                    ) : (
+                      <Copy className="h-3 w-3 text-gray-400" />
+                    )}
+                  </Button>
+                </TableCell>
+                <TableCell className="text-white">{code.created_by}</TableCell>
+                <TableCell className="text-white">{format(new Date(code.created_at), 'MMM d, yyyy HH:mm')}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    code.is_used 
+                      ? 'bg-red-900/30 text-red-400'
+                      : 'bg-green-900/30 text-green-400'
+                  }`}>
+                    {code.is_used ? 'Used' : 'Available'}
+                  </span>
+                </TableCell>
+                <TableCell className="text-white">{code.used_by || '-'}</TableCell>
+                <TableCell className="text-white">
+                  {code.used_at 
+                    ? format(new Date(code.used_at), 'MMM d, yyyy HH:mm')
+                    : '-'
+                  }
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-red-900/30 hover:text-red-400 text-white"
+                    onClick={() => deleteCode(code.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {codes.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-white py-8">
+                  No access codes found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog 
+        open={generateDialog} 
+        onOpenChange={setGenerateDialog}
+      >
+        <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200 mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white">Generate Access Code</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to generate a new invite code? This code will be available for one-time use.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+            <Button
+              type="button"
+              className="w-full sm:w-auto bg-black hover:bg-[#222222] text-white border border-[#2a2a2a]"
+              onClick={() => {
+                generateCode();
+                setGenerateDialog(false);
+              }}
+            >
+              Generate
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto bg-transparent border-gray-800 text-gray-400 hover:bg-[#222222] hover:text-gray-200"
+              onClick={() => setGenerateDialog(false)}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 } 
