@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Comment {
@@ -21,16 +21,27 @@ interface CommentsProps {
   videoId: string;
 }
 
+const COMMENTS_PER_PAGE = 5;
+
 export function Comments({ videoId }: CommentsProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(comments.length / COMMENTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * COMMENTS_PER_PAGE;
+  const endIndex = startIndex + COMMENTS_PER_PAGE;
+  const paginatedComments = comments.slice(startIndex, endIndex);
 
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true);
       try {
         // Fetch comments
         const commentsRes = await fetch(`/api/videos/comments/get?videoId=${videoId}`);
@@ -48,6 +59,8 @@ export function Comments({ videoId }: CommentsProps) {
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -76,6 +89,7 @@ export function Comments({ videoId }: CommentsProps) {
         const data = await res.json();
         setComments(prev => [data.comment, ...prev]);
         setNewComment('');
+        setCurrentPage(1); // Go to first page when adding new comment
         toast.success('Comment added successfully');
       } else {
         toast.error('Failed to add comment');
@@ -95,6 +109,10 @@ export function Comments({ videoId }: CommentsProps) {
 
       if (res.ok) {
         setComments(prev => prev.filter(comment => comment.id !== commentId));
+        // If we've deleted the last comment on the current page (except page 1)
+        if (paginatedComments.length === 1 && currentPage > 1) {
+          setCurrentPage(prev => prev - 1);
+        }
         toast.success('Comment deleted successfully');
       } else {
         toast.error('Failed to delete comment');
@@ -128,36 +146,73 @@ export function Comments({ videoId }: CommentsProps) {
 
       {/* Comments List */}
       <div className="space-y-4">
-        {comments.map((comment) => (
-          <Card key={comment.id} className="bg-[#111] border-gray-800 p-4">
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <button
-                    onClick={() => router.push(`/users/${comment.username}`)}
-                    className="font-semibold text-white hover:underline"
-                  >
-                    {comment.username}
-                  </button>
-                  <span className="text-xs text-gray-400">
-                    {new Date(comment.created_at).toLocaleDateString()}
-                    {comment.is_edited && ' (edited)'}
-                  </span>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-4 border-gray-800 border-t-gray-400 rounded-full animate-spin"></div>
+          </div>
+        ) : comments.length === 0 ? (
+          <p className="text-gray-400 text-center py-4">No comments yet</p>
+        ) : (
+          <>
+            {paginatedComments.map((comment) => (
+              <Card key={comment.id} className="bg-[#111] border-gray-800 p-4">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <button
+                        onClick={() => router.push(`/users/${comment.username}`)}
+                        className="font-semibold text-white hover:underline"
+                      >
+                        {comment.username}
+                      </button>
+                      <span className="text-xs text-gray-400">
+                        {new Date(comment.created_at).toLocaleDateString()}
+                        {comment.is_edited && ' (edited)'}
+                      </span>
+                    </div>
+                    <p className="text-gray-300 whitespace-pre-wrap">{comment.content}</p>
+                  </div>
+                  {(currentUserRole === 'admin' || currentUserId === comment.user_id) && (
+                    <button
+                      onClick={() => handleDeleteComment(comment.id)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete comment"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                <p className="text-gray-300 whitespace-pre-wrap">{comment.content}</p>
-              </div>
-              {(currentUserRole === 'admin' || currentUserId === comment.user_id) && (
-                <button
-                  onClick={() => handleDeleteComment(comment.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                  title="Delete comment"
+              </Card>
+            ))}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                  disabled={currentPage === 1}
+                  className="bg-[#111] border-gray-800 text-white hover:bg-[#222]"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </Card>
-        ))}
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-gray-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={currentPage === totalPages}
+                  className="bg-[#111] border-gray-800 text-white hover:bg-[#222]"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
