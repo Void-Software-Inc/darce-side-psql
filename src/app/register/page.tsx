@@ -3,93 +3,15 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import CodeVerificationStep from './components/code-verification-step';
+import RegistrationFormStep from './components/registration-form-step';
 import React from 'react';
 
 export default function RegisterPage() {
   const [step, setStep] = useState(0);
   const [accessCode, setAccessCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
   const router = useRouter();
-
-  const verifyCode = async () => {
-    try {
-      setIsVerifying(true);
-      const response = await fetch('/api/admin/codes/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code: accessCode }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || 'Invalid code');
-      }
-
-      setStep(1);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to verify code');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleRegister = async () => {
-    try {
-      if (formData.password !== formData.confirmPassword) {
-        toast.error('Passwords do not match');
-        return;
-      }
-
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-          accessCode
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message);
-      }
-
-      toast.success('Registration successful');
-      router.push('/login');
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
-    }
-  };
-
-  const handleNext = async () => {
-    if (step === 0) {
-      if (!accessCode) {
-        toast.error('Please enter an access code');
-        return;
-      }
-      await verifyCode();
-    } else {
-      await handleRegister();
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#111111] p-4">
@@ -99,82 +21,13 @@ export default function RegisterPage() {
         <div className="mt-8 mb-6">
           <AnimatePresence mode="wait">
             {step === 0 ? (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                <h2 className="text-xl font-semibold text-white mb-4">Enter Access Code</h2>
-                <div className="space-y-2">
-                  <Label htmlFor="accessCode" className="text-white">Access Code</Label>
-                  <Input
-                    id="accessCode"
-                    value={accessCode}
-                    onChange={(e) => setAccessCode(e.target.value)}
-                    placeholder="Enter your access code"
-                    className="bg-[#222222] border-[#2a2a2a] text-white"
-                  />
-                </div>
-              </motion.div>
+              <CodeVerificationStep
+                accessCode={accessCode}
+                onCodeChange={setAccessCode}
+                onVerified={() => setStep(1)}
+              />
             ) : (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                <h2 className="text-xl font-semibold text-white mb-4">Create Your Account</h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username" className="text-white">Username</Label>
-                    <Input
-                      id="username"
-                      value={formData.username}
-                      onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                      placeholder="Choose a username"
-                      className="bg-[#222222] border-[#2a2a2a] text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="Enter your email"
-                      className="bg-[#222222] border-[#2a2a2a] text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-white">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="Create a password"
-                      className="bg-[#222222] border-[#2a2a2a] text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-white">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="Confirm your password"
-                      className="bg-[#222222] border-[#2a2a2a] text-white"
-                    />
-                  </div>
-                </div>
-              </motion.div>
+              <RegistrationFormStep accessCode={accessCode} />
             )}
           </AnimatePresence>
         </div>
@@ -186,13 +39,6 @@ export default function RegisterPage() {
             onClick={() => router.push('/login')}
           >
             Back to Login
-          </Button>
-          <Button
-            onClick={handleNext}
-            disabled={isVerifying}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            {isVerifying ? 'Verifying...' : step === 0 ? 'Verify Code' : 'Create Account'}
           </Button>
         </div>
       </div>
