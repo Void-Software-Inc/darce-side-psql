@@ -22,6 +22,13 @@ interface User {
   role?: string;
 }
 
+const trimTitle = (title: string, maxLength: number = 12) => {
+  if (title.length <= maxLength) return title;
+  const start = title.slice(0, Math.ceil(maxLength / 2));
+  const end = title.slice(title.length - Math.floor(maxLength / 2));
+  return `${start}...${end}`;
+};
+
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +117,9 @@ export default function Navbar() {
                 displayText = videoTitle;
               }
             }
+
+            // Trim long titles
+            displayText = trimTitle(displayText);
 
             // On mobile, only show if it's the last item
             if (isLast) {

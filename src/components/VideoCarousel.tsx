@@ -127,7 +127,7 @@ const VideoCard = ({ video, width, margin }: { video: Video; width: number; marg
         width,
         marginRight: margin,
       }}
-      onClick={() => router.push(`/videos/${video.id}`)}
+      onClick={() => router.push(`/videos/${video.id}?title=${encodeURIComponent(video.title)}`)}
     >
       <div className="relative aspect-square w-full bg-[#111]">
         <Image

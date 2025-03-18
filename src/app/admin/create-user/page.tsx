@@ -76,7 +76,7 @@ export default function CreateUserPage() {
   };
   
   return (
-    <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center">
+    <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center mt-12">
       <div className="w-full max-w-lg px-4">
         <Card className="bg-[#1a1a1a] border border-[#2a2a2a] shadow-xl">
           <div className="p-8">

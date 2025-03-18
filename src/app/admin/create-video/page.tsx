@@ -115,7 +115,7 @@ export default function CreateVideoPage() {
   };
   
   return (
-    <div className="h-[calc(100vh-64px)] bg-[#0a0a0a] flex items-center justify-center">
+    <div className="bg-[#0a0a0a] flex items-center justify-center mt-12 mb-12">
       <div className="w-full max-w-4xl px-4">
         <Card className="bg-[#1a1a1a] border border-[#2a2a2a] shadow-xl">
           <div className="p-8">
