@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -33,6 +33,7 @@ interface User {
 const USERS_PER_PAGE = 5;
 
 export default function UsersOverview() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +192,12 @@ export default function UsersOverview() {
                   <TableRow key={user.id} className="border-[#2a2a2a] hover:bg-[#222222] transition-colors">
                     <TableCell className="text-gray-200 py-3">
                       <div>
-                        <div>{user.username}</div>
+                        <div 
+                          className="cursor-pointer hover:text-indigo-600 transition-colors"
+                          onClick={() => router.push(`/users/${user.username}`)}
+                        >
+                          {user.username}
+                        </div>
                         <div className="text-gray-400 text-sm md:hidden">{user.email}</div>
                       </div>
                     </TableCell>

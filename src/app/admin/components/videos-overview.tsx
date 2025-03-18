@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -36,6 +37,7 @@ interface Video {
 const VIDEOS_PER_PAGE = 5;
 
 export default function VideosOverview() {
+  const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,8 +198,24 @@ export default function VideosOverview() {
                   <TableRow key={video.id} className="border-[#2a2a2a] hover:bg-[#222222] transition-colors">
                     <TableCell className="text-gray-200 py-3">
                       <div>
-                        <div>{video.title}</div>
-                        <div className="text-gray-400 text-sm md:hidden">by {video.author}</div>
+                        <div 
+                          className="cursor-pointer hover:text-indigo-600 transition-colors"
+                          onClick={() => router.push(`/videos/${video.id}`)}
+                        >
+                          {video.title}
+                        </div>
+                        <div className="text-gray-400 text-sm md:hidden">
+                          by{" "}
+                          <span 
+                            className="cursor-pointer hover:text-indigo-600 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/users/${video.created_by}`);
+                            }}
+                          >
+                            {video.author}
+                          </span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -211,7 +229,9 @@ export default function VideosOverview() {
                         {video.type}
                       </span>
                     </TableCell>
-                    <TableCell className="text-gray-200 py-3 hidden md:table-cell">{video.author}</TableCell>
+                    <TableCell className="text-gray-200 py-3 hidden md:table-cell">
+                      {video.author}
+                    </TableCell>
                     <TableCell className="text-gray-200 py-3 hidden sm:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {video.labels.map((label, index) => (
