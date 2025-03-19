@@ -54,7 +54,6 @@ export async function DELETE(request: NextRequest) {
 
     // Prevent admin from deleting themselves - using Number for proper comparison
     if (Number(userId) === decoded.userId) {
-      console.log(`Attempted self-deletion prevented. User ID: ${userId}, Decoded ID: ${decoded.userId}`);
       return NextResponse.json(
         { success: false, message: 'Cannot delete your own account' },
         { status: 400 }

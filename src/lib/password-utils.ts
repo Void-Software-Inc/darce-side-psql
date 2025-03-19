@@ -32,24 +32,17 @@ export async function hashPassword(password: string, useDemoSalt: boolean = fals
  */
 export async function comparePassword(password: string, storedHash: string): Promise<boolean> {
   try {
-    console.log('Comparing password:', { password, storedHash });
-    
     // Split the stored hash into salt and hash
     const [salt, hash] = storedHash.split(':');
-    console.log('Split hash:', { salt, hash });
-    
     // Special case for demo users with hardcoded passwords
     if (salt === 'demo-salt') {
-      console.log('Using demo-salt comparison method');
       
       // Hardcoded checks for demo users
       if (password === 'admin123' && hash === '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918') {
-        console.log('Admin user matched with hardcoded password!');
         return true;
       }
       
       if (password === 'user123' && hash === '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92') {
-        console.log('Regular user matched with hardcoded password!');
         return true;
       }
       
@@ -60,31 +53,18 @@ export async function comparePassword(password: string, storedHash: string): Pro
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       
-      console.log('Demo user comparison:', { 
-        calculatedHash, 
-        storedHash: hash,
-        matches: calculatedHash === hash
-      });
+      return calculatedHash === hash;
       
       return calculatedHash === hash;
     }
     
     // For regular users with custom salts, we'll use the Web Crypto API
-    console.log('Using custom salt comparison method');
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     
-    console.log('Regular user comparison:', { 
-      calculatedHash: hashHex, 
-      storedHash: hash,
-      matches: hashHex === hash
-    });
-    
-    // For the demo, we'll just compare the hashes directly
-    // This is not how you would normally verify passwords with salts
     return hashHex === hash;
   } catch (error) {
     console.error('Error comparing password:', error);

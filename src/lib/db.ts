@@ -14,7 +14,7 @@ pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Error connecting to PostgreSQL database:', err);
   } else {
-    console.log('Successfully connected to PostgreSQL database at:', res.rows[0].now);
+    // Do nothing
   }
 });
 
@@ -24,7 +24,6 @@ export async function query(text: string, params?: any[]) {
     const start = Date.now();
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: res.rowCount });
     return res;
   } catch (error) {
     console.error('Error executing query:', error);

@@ -26,12 +26,15 @@ export async function GET(
       );
     }
 
+    // Get username from params and await it
+    const { username } = await params;
+
     // Get user information
     const userResult = await query(
       `SELECT id, username, created_at, team
        FROM users
        WHERE username = $1`,
-      [params.username]
+      [username]
     );
 
     if (userResult.rows.length === 0) {
@@ -113,7 +116,7 @@ export async function GET(
       [decoded.userId]
     );
 
-    const isCurrentUser = currentUserResult.rows[0].username === params.username;
+    const isCurrentUser = currentUserResult.rows[0].username === username;
 
     return NextResponse.json({
       success: true,

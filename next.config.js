@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configure server-only modules
-  experimental: {
-    serverComponentsExternalPackages: ['pg'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
   webpack: (config) => {
     // Ignore pg-native module
@@ -11,9 +15,6 @@ const nextConfig = {
     config.resolve.fallback['pg-native'] = false;
     
     return config;
-  },
-  images: {
-    domains: ['cdn.shopify.com'],
   },
   eslint: {
     ignoreDuringBuilds: true,
