@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Prevent admin from deleting themselves - using Number for proper comparison
+    // Prevent admin from deleting themselves
     if (Number(userId) === decoded.userId) {
       return NextResponse.json(
         { success: false, message: 'Cannot delete your own account' },
@@ -60,23 +60,69 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete the user
-    const deleteResult = await query(
-      'DELETE FROM users WHERE id = $1 RETURNING id',
-      [userId]
-    );
+    // Start a transaction to handle all dependencies
+    await query('BEGIN');
 
-    if (deleteResult.rowCount === 0) {
-      return NextResponse.json(
-        { success: false, message: 'User not found or already deleted' },
-        { status: 404 }
+    try {
+      // Delete access codes
+      await query(
+        'DELETE FROM access_codes WHERE used_by = $1',
+        [userId]
       );
+
+      // Delete recommendation upvotes
+      await query(
+        'DELETE FROM recommendation_upvotes WHERE user_id = $1',
+        [userId]
+      );
+
+      // Delete recommendations
+      await query(
+        'DELETE FROM recommendations WHERE created_by = $1',
+        [userId]
+      );
+
+      // Delete video comments
+      await query(
+        'DELETE FROM video_comments WHERE user_id = $1',
+        [userId]
+      );
+
+      // Delete video likes
+      await query(
+        'DELETE FROM video_likes WHERE user_id = $1',
+        [userId]
+      );
+
+      // Finally, delete the user
+      const deleteResult = await query(
+        'DELETE FROM users WHERE id = $1 RETURNING id',
+        [userId]
+      );
+
+      if (deleteResult.rowCount === 0) {
+        // Rollback if user not found
+        await query('ROLLBACK');
+        return NextResponse.json(
+          { success: false, message: 'User not found or already deleted' },
+          { status: 404 }
+        );
+      }
+
+      // Commit the transaction
+      await query('COMMIT');
+
+      return NextResponse.json({
+        success: true,
+        message: 'User and all associated data deleted successfully'
+      });
+
+    } catch (error) {
+      // Rollback on any error
+      await query('ROLLBACK');
+      throw error;
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'User deleted successfully'
-    });
   } catch (error) {
     console.error('Error deleting user:', error);
     return NextResponse.json(

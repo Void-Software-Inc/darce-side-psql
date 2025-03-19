@@ -31,7 +31,7 @@ function NotFoundContent() {
 export default function NotFound() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="fixed inset-0 bg-black text-white flex items-center justify-center">
         <div className="text-center space-y-6 p-8">
           <h1 className="text-4xl font-bold">404</h1>
           <h2 className="text-xl text-gray-400">Page Not Found</h2>
