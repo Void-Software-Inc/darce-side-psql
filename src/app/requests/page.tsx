@@ -33,18 +33,26 @@ export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [createDialog, setCreateDialog] = useState({
     isOpen: false,
     title: '',
     description: ''
   });
 
-  // Filter recommendations based on search query
-  const filteredRecommendations = recommendations.filter(recommendation => 
-    recommendation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recommendation.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recommendation.created_by.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter recommendations based on search query and status
+  const filteredRecommendations = recommendations.filter(recommendation => {
+    const matchesSearch = 
+      recommendation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      recommendation.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      recommendation.created_by.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = 
+      selectedStatus === 'all' || 
+      recommendation.status === selectedStatus;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const fetchRecommendations = async () => {
     try {
@@ -131,23 +139,84 @@ export default function RecommendationsPage() {
           </div>
 
           <Button
-            onClick={() => setCreateDialog(prev => ({ ...prev, isOpen: true }))}
-            className="w-full sm:w-auto bg-[#2a2a2a] hover:bg-[#333333] text-white"
+            onClick={() => setCreateDialog({ isOpen: true, title: '', description: '' })}
+            className="bg-blue-600 text-white hover:bg-blue-500 w-full sm:w-auto"
           >
-            Create Recommendation
+            Create Request
           </Button>
         </div>
 
         {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            type="text"
-            placeholder="Search recommendations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-[#222222] border-[#2a2a2a] text-gray-200"
-          />
+        <div className="space-y-4">
+          {/* Filter Buttons */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+            <Button
+              variant={selectedStatus === 'all' ? "default" : "outline"}
+              className={`
+                w-full sm:w-auto
+                ${selectedStatus === 'all' 
+                  ? 'bg-white text-black hover:bg-gray-200' 
+                  : 'bg-[#111] border-gray-800 text-gray-400 hover:text-white hover:bg-[#222]'}
+                transition-all duration-200 text-sm
+              `}
+              onClick={() => setSelectedStatus('all')}
+            >
+              All Requests
+            </Button>
+            <Button
+              variant={selectedStatus === 'pending' ? "default" : "outline"}
+              className={`
+                w-full sm:w-auto
+                ${selectedStatus === 'pending' 
+                  ? 'bg-white text-black hover:bg-gray-200' 
+                  : 'bg-[#111] border-gray-800 text-gray-400 hover:text-white hover:bg-[#222]'}
+                transition-all duration-200 text-sm
+              `}
+              onClick={() => setSelectedStatus('pending')}
+            >
+              Pending
+            </Button>
+            <Button
+              variant={selectedStatus === 'resolved' ? "default" : "outline"}
+              className={`
+                w-full sm:w-auto
+                ${selectedStatus === 'resolved' 
+                  ? 'bg-white text-black hover:bg-gray-200' 
+                  : 'bg-[#111] border-gray-800 text-gray-400 hover:text-white hover:bg-[#222]'}
+                transition-all duration-200 text-sm
+              `}
+              onClick={() => setSelectedStatus('resolved')}
+            >
+              Resolved
+            </Button>
+            <Button
+              variant={selectedStatus === 'denied' ? "default" : "outline"}
+              className={`
+                w-full sm:w-auto
+                ${selectedStatus === 'denied' 
+                  ? 'bg-white text-black hover:bg-gray-200' 
+                  : 'bg-[#111] border-gray-800 text-gray-400 hover:text-white hover:bg-[#222]'}
+                transition-all duration-200 text-sm
+              `}
+              onClick={() => setSelectedStatus('denied')}
+            >
+              Denied
+            </Button>
+          </div>
+
+          {/* Search Input */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search requests..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-[#111] border-gray-800 text-gray-200 w-full"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Recommendations List */}
