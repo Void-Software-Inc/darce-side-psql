@@ -68,6 +68,28 @@ export async function GET(
       [user.id]
     );
 
+    // Get recommendations count and list
+    const recommendationsCountResult = await query(
+      'SELECT COUNT(*) FROM recommendations WHERE created_by = $1',
+      [user.id]
+    );
+
+    const recommendationsResult = await query(
+      `SELECT 
+        r.id,
+        r.title,
+        r.description,
+        r.status,
+        r.upvotes_count,
+        r.admin_response,
+        r.created_at,
+        r.updated_at
+      FROM recommendations r
+      WHERE r.created_by = $1
+      ORDER BY r.created_at DESC`,
+      [user.id]
+    );
+
     // Check if this is the current user's profile
     const currentUserResult = await query(
       'SELECT username FROM users WHERE id = $1',
@@ -84,6 +106,8 @@ export async function GET(
         team: user.team,
         likes_given: parseInt(likesGivenCount.rows[0].count),
         comments_count: parseInt(commentsCount.rows[0].count),
+        recommendations_count: parseInt(recommendationsCountResult.rows[0].count),
+        recommendations: recommendationsResult.rows,
         liked_videos: likedVideosResult.rows,
         is_current_user: isCurrentUser
       }

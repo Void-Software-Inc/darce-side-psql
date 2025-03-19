@@ -8,6 +8,7 @@ import { CalendarDays, Heart, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import UpvoteButton from '@/app/requests/components/UpvoteButton';
 
 // Function to trim titles to match "Higher Tripod Passing" length (20 characters)
 const trimTitle = (title: string, maxLength: number = 21) => {
@@ -37,6 +38,19 @@ interface UserProfile {
   liked_videos: Video[];
   is_current_user: boolean;
   team: string;
+  recommendations_count: number;
+  recommendations: Recommendation[];
+}
+
+interface Recommendation {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  upvotes_count: number;
+  admin_response: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function UserProfilePage() {
@@ -192,6 +206,12 @@ export default function UserProfilePage() {
                   <MessageSquare className="h-4 w-4 flex-shrink-0" />
                   <span className="text-sm">{profile.comments_count} comments</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 flex-shrink-0">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                  </svg>
+                  <span className="text-sm">{profile.recommendations_count} requests</span>
+                </div>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <span className="text-gray-400 text-sm">Team:</span>
@@ -277,6 +297,52 @@ export default function UserProfilePage() {
                         </button>
                       </div>
                     </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recommendations Section */}
+        <div className="mt-8">
+          <h2 className="text-xl md:text-2xl font-bold mb-6">Requests by {profile.username}</h2>
+          {profile.recommendations.length === 0 ? (
+            <Card className="p-6 bg-[#111] border-gray-800">
+              <p className="text-gray-400 text-center text-sm">No requests yet</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {profile.recommendations.map((recommendation) => (
+                <Card 
+                  key={recommendation.id} 
+                  className="bg-[#111] border-gray-800 p-4"
+                >
+                  <div className="flex flex-col gap-2">
+                    <h3 className="text-lg font-semibold text-white">{recommendation.title}</h3>
+                    <p className="text-sm text-gray-400">{recommendation.description}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        recommendation.status === 'pending' ? 'bg-yellow-900/50 text-yellow-500' :
+                        recommendation.status === 'resolved' ? 'bg-green-900/50 text-green-500' :
+                        'bg-red-900/50 text-red-500'
+                      }`}>
+                        {recommendation.status.charAt(0).toUpperCase() + recommendation.status.slice(1)}
+                      </span>
+                      <UpvoteButton
+                        recommendationId={recommendation.id}
+                        initialUpvotesCount={recommendation.upvotes_count}
+                        disabled={recommendation.status !== 'pending'}
+                      />
+                    </div>
+                    {recommendation.admin_response && (
+                      <div className="mt-2 p-3 bg-gray-900/50 rounded-md">
+                        <p className="text-sm text-gray-300">{recommendation.admin_response}</p>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      Created {new Date(recommendation.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </Card>
               ))}
