@@ -167,13 +167,21 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4">
             <Link href="/videos">
               <Button 
                 variant="ghost" 
                 className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
               >
                 Videos
+              </Button>
+            </Link>
+            <Link href="/recommendations">
+              <Button 
+                variant="ghost" 
+                className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
+              >
+                Recommendations
               </Button>
             </Link>
             {isAdmin && (
@@ -205,7 +213,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-gray-400 hover:text-white transition-colors"
+            className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -214,7 +222,7 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden bg-[#111] border-t border-gray-800">
+          <div className="lg:hidden bg-[#111] border-t border-gray-800">
             <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
               <Link href="/videos" className="w-full">
                 <Button 
@@ -222,6 +230,14 @@ export default function Navbar() {
                   className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
                 >
                   Videos
+                </Button>
+              </Link>
+              <Link href="/recommendations" className="w-full">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
+                >
+                  Recommendations
                 </Button>
               </Link>
               {isAdmin && (
