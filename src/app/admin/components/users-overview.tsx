@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Search } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface User {
   id: number;
@@ -40,6 +41,7 @@ export default function UsersOverview() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     userId: number | null;
@@ -89,6 +91,22 @@ export default function UsersOverview() {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUserId(data.user.id);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
   const handleDelete = async () => {
     if (!deleteDialog.userId) return;
 
@@ -100,13 +118,14 @@ export default function UsersOverview() {
       const data = await res.json();
 
       if (res.ok) {
+        toast.success('User deleted successfully');
         fetchUsers();
       } else {
-        setError(data.message || 'Failed to delete user');
+        toast.error(data.message || 'Failed to delete user');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      setError('Error deleting user');
+      toast.error('Error deleting user');
     } finally {
       setDeleteDialog({ isOpen: false, userId: null, username: '' });
     }
@@ -230,12 +249,20 @@ export default function UsersOverview() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
-                        onClick={() => setDeleteDialog({
-                          isOpen: true,
-                          userId: user.id,
-                          username: user.username
-                        })}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-950/30 disabled:opacity-50"
+                        onClick={() => {
+                          if (user.id === currentUserId) {
+                            toast.error("Cannot delete your own account");
+                            return;
+                          }
+                          setDeleteDialog({
+                            isOpen: true,
+                            userId: user.id,
+                            username: user.username
+                          });
+                        }}
+                        disabled={user.id === currentUserId}
+                        title={user.id === currentUserId ? "Cannot delete your own account" : "Delete user"}
                       >
                         Delete
                       </Button>
