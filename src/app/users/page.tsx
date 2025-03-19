@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,13 +25,31 @@ interface PaginationInfo {
   usersPerPage: number;
 }
 
+// SearchComponent that uses useSearchParams
+function SearchComponent({ onSearch }: { onSearch: (query: string) => void }) {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+
+  return (
+    <div className="relative w-full sm:w-96">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <Input
+        type="text"
+        placeholder="Search users..."
+        defaultValue={initialQuery}
+        onChange={(e) => onSearch(e.target.value)}
+        className="pl-10 bg-[#111] border-gray-800 text-gray-200 w-full"
+      />
+    </div>
+  );
+}
+
 export default function UsersPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [searchQuery, setSearchQuery] = useState('');
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: 1,
     totalPages: 1,
@@ -62,6 +80,7 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
     const page = parseInt(searchParams.get('page') || '1');
     fetchUsers(page, debouncedSearch);
 
@@ -72,10 +91,10 @@ export default function UsersPage() {
       params.delete('q');
     }
     router.push(`/users?${params.toString()}`);
-  }, [debouncedSearch, searchParams.get('page')]);
+  }, [debouncedSearch]);
 
   const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(window.location.search);
     params.set('page', newPage.toString());
     router.push(`/users?${params.toString()}`);
   };
@@ -96,17 +115,13 @@ export default function UsersPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6">Users</h1>
           
-          {/* Search Bar */}
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-[#111] border-gray-800 text-gray-200 w-full"
-            />
-          </div>
+          <Suspense fallback={
+            <div className="relative w-full sm:w-96">
+              <div className="h-10 bg-[#111] border border-gray-800 rounded-md animate-pulse" />
+            </div>
+          }>
+            <SearchComponent onSearch={setSearchQuery} />
+          </Suspense>
         </div>
 
         {loading ? (
