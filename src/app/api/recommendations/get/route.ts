@@ -48,12 +48,10 @@ export async function GET(request: NextRequest) {
       JOIN users u ON r.created_by = u.id
       ORDER BY 
         CASE 
-          WHEN r.status = 'pending' THEN 0
-          WHEN r.status = 'resolved' THEN 1
-          ELSE 2
-        END,
-        r.upvotes_count DESC,
-        r.created_at DESC`
+          WHEN r.status = 'pending' THEN r.created_at
+          ELSE r.updated_at
+        END DESC,
+        r.upvotes_count DESC`
     );
 
     return NextResponse.json({

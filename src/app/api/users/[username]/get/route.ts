@@ -90,6 +90,23 @@ export async function GET(
       [user.id]
     );
 
+    // Get user's comments
+    const commentsResult = await query(
+      `SELECT 
+        c.id,
+        c.content,
+        c.created_at,
+        c.updated_at,
+        c.is_edited,
+        v.id as video_id,
+        v.title as video_title
+      FROM video_comments c
+      JOIN videos v ON c.video_id = v.id
+      WHERE c.user_id = $1
+      ORDER BY c.created_at DESC`,
+      [user.id]
+    );
+
     // Check if this is the current user's profile
     const currentUserResult = await query(
       'SELECT username FROM users WHERE id = $1',
@@ -108,6 +125,7 @@ export async function GET(
         comments_count: parseInt(commentsCount.rows[0].count),
         recommendations_count: parseInt(recommendationsCountResult.rows[0].count),
         recommendations: recommendationsResult.rows,
+        comments: commentsResult.rows,
         liked_videos: likedVideosResult.rows,
         is_current_user: isCurrentUser
       }

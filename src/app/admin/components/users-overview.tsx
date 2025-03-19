@@ -164,7 +164,7 @@ export default function UsersOverview() {
   return (
     <div>
       {/* Search Bar */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -172,7 +172,7 @@ export default function UsersOverview() {
             placeholder="Search by username or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-[#222222] border-[#2a2a2a] text-gray-200 w-full sm:w-64"
+            className="pl-10 bg-[#111] border-gray-800 text-gray-200 w-full"
           />
         </div>
       </div>

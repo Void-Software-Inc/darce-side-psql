@@ -56,7 +56,7 @@ export default function AdminPage() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">Admin Dashboard</h1>
-            <p className="text-gray-400">Manage users, videos, recommendations, and access codes</p>
+            <p className="text-gray-400">Manage users, videos, requests, and access codes</p>
           </div>
 
           {/* Create Buttons */}
@@ -114,10 +114,10 @@ export default function AdminPage() {
               Videos
             </TabsTrigger>
             <TabsTrigger 
-              value="recommendations"
+              value="requests"
               className="data-[state=active]:bg-[#2a2a2a] data-[state=active]:text-white"
             >
-              Recommendations
+              Requests
             </TabsTrigger>
             <TabsTrigger 
               value="codes"
@@ -132,7 +132,7 @@ export default function AdminPage() {
           <TabsContent value="videos" className="mt-6">
             <VideosOverview />
           </TabsContent>
-          <TabsContent value="recommendations" className="mt-6">
+          <TabsContent value="requests" className="mt-6">
             <RecommendationsOverview />
           </TabsContent>
           <TabsContent value="codes" className="mt-6">

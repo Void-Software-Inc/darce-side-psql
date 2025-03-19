@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Trash2, Copy, Check } from 'lucide-react';
+import { Trash2, Copy, Check, Search } from 'lucide-react';
 
 interface AccessCode {
   id: number;
@@ -40,6 +41,7 @@ export default function CodesOverview() {
   const [generateDialog, setGenerateDialog] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const copyToClipboard = async (code: string, id: number) => {
     try {
@@ -136,12 +138,27 @@ export default function CodesOverview() {
     };
   }, []);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(codes.length / CODES_PER_PAGE);
-  const paginatedCodes = codes.slice(
+  // Filter codes based on search query
+  const filteredCodes = codes.filter(code => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      code.code.toLowerCase().includes(searchLower) ||
+      code.created_by.toLowerCase().includes(searchLower) ||
+      (code.used_by && code.used_by.toLowerCase().includes(searchLower))
+    );
+  });
+
+  // Calculate pagination based on filtered codes
+  const totalPages = Math.ceil(filteredCodes.length / CODES_PER_PAGE);
+  const paginatedCodes = filteredCodes.slice(
     (currentPage - 1) * CODES_PER_PAGE,
     currentPage * CODES_PER_PAGE
   );
+
+  // Reset to first page when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const LoadingSkeleton = () => (
     <div className="min-w-[640px]">
@@ -198,6 +215,20 @@ export default function CodesOverview() {
 
   return (
     <>
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search codes, creators, or users..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-[#111] border-gray-800 text-gray-200 w-full"
+          />
+        </div>
+      </div>
+
       <div className="rounded-lg overflow-x-auto border border-[#2a2a2a]">
         <div className="min-w-[640px]">
           <Table>
@@ -260,10 +291,10 @@ export default function CodesOverview() {
                   </TableCell>
                 </TableRow>
               ))}
-              {codes.length === 0 && (
+              {filteredCodes.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-gray-200 py-8">
-                    No access codes found
+                    {searchQuery ? 'No matching codes found' : 'No access codes found'}
                   </TableCell>
                 </TableRow>
               )}
@@ -271,10 +302,10 @@ export default function CodesOverview() {
           </Table>
 
           {/* Pagination */}
-          {codes.length > 0 && (
+          {filteredCodes.length > 0 && (
             <div className="flex items-center justify-between px-4 py-4 border-t border-[#2a2a2a]">
               <div className="text-sm text-gray-400">
-                Showing {((currentPage - 1) * CODES_PER_PAGE) + 1} to {Math.min(currentPage * CODES_PER_PAGE, codes.length)} of {codes.length} codes
+                Showing {((currentPage - 1) * CODES_PER_PAGE) + 1} to {Math.min(currentPage * CODES_PER_PAGE, filteredCodes.length)} of {filteredCodes.length} codes
               </div>
               <div className="flex gap-2">
                 <Button

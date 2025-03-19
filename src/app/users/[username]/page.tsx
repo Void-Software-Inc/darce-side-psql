@@ -9,6 +9,15 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import UpvoteButton from '@/app/requests/components/UpvoteButton';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Function to trim titles to match "Higher Tripod Passing" length (20 characters)
 const trimTitle = (title: string, maxLength: number = 21) => {
@@ -30,6 +39,16 @@ interface Video {
   comments_count: number;
 }
 
+interface Comment {
+  id: number;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  is_edited: boolean;
+  video_id: number;
+  video_title: string;
+}
+
 interface UserProfile {
   username: string;
   created_at: string;
@@ -40,6 +59,7 @@ interface UserProfile {
   team: string;
   recommendations_count: number;
   recommendations: Recommendation[];
+  comments: Comment[];
 }
 
 interface Recommendation {
@@ -53,6 +73,8 @@ interface Recommendation {
   updated_at: string;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -63,6 +85,8 @@ export default function UserProfilePage() {
   const [likeCounts, setLikeCounts] = useState<{ [key: number]: number }>({});
   const [isEditingTeam, setIsEditingTeam] = useState(false);
   const [teamValue, setTeamValue] = useState('');
+  const [currentRecommendationsPage, setCurrentRecommendationsPage] = useState(1);
+  const [currentCommentsPage, setCurrentCommentsPage] = useState(1);
 
   useEffect(() => {
     async function fetchUserProfile() {
@@ -161,6 +185,20 @@ export default function UserProfilePage() {
       toast.error('Failed to update team');
     }
   };
+
+  // Pagination calculations
+  const totalRecommendationsPages = profile ? Math.ceil(profile.recommendations.length / ITEMS_PER_PAGE) : 0;
+  const totalCommentsPages = profile ? Math.ceil(profile.comments.length / ITEMS_PER_PAGE) : 0;
+
+  const paginatedRecommendations = profile?.recommendations.slice(
+    (currentRecommendationsPage - 1) * ITEMS_PER_PAGE,
+    currentRecommendationsPage * ITEMS_PER_PAGE
+  ) || [];
+
+  const paginatedComments = profile?.comments.slice(
+    (currentCommentsPage - 1) * ITEMS_PER_PAGE,
+    currentCommentsPage * ITEMS_PER_PAGE
+  ) || [];
 
   if (loading) {
     return (
@@ -306,46 +344,141 @@ export default function UserProfilePage() {
 
         {/* Recommendations Section */}
         <div className="mt-8">
-          <h2 className="text-xl md:text-2xl font-bold mb-6">Requests by {profile.username}</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-6">Requests</h2>
           {profile.recommendations.length === 0 ? (
             <Card className="p-6 bg-[#111] border-gray-800">
               <p className="text-gray-400 text-center text-sm">No requests yet</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {profile.recommendations.map((recommendation) => (
-                <Card 
-                  key={recommendation.id} 
-                  className="bg-[#111] border-gray-800 p-4"
-                >
-                  <div className="flex flex-col gap-2">
-                    <h3 className="text-lg font-semibold text-white">{recommendation.title}</h3>
-                    <p className="text-sm text-gray-400">{recommendation.description}</p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        recommendation.status === 'pending' ? 'bg-yellow-900/50 text-yellow-500' :
-                        recommendation.status === 'resolved' ? 'bg-green-900/50 text-green-500' :
-                        'bg-red-900/50 text-red-500'
-                      }`}>
-                        {recommendation.status.charAt(0).toUpperCase() + recommendation.status.slice(1)}
-                      </span>
-                      <UpvoteButton
-                        recommendationId={recommendation.id}
-                        initialUpvotesCount={recommendation.upvotes_count}
-                        disabled={recommendation.status !== 'pending'}
-                      />
-                    </div>
-                    {recommendation.admin_response && (
-                      <div className="mt-2 p-3 bg-gray-900/50 rounded-md">
-                        <p className="text-sm text-gray-300">{recommendation.admin_response}</p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                {paginatedRecommendations.map((recommendation) => (
+                  <Card 
+                    key={recommendation.id} 
+                    className="bg-[#111] border-gray-800 p-4"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <h3 className="text-lg font-semibold text-white">{recommendation.title}</h3>
+                      <p className="text-sm text-gray-400">{recommendation.description}</p>
+                      <div className="flex items-center gap-4 mt-2">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          recommendation.status === 'pending' ? 'bg-yellow-900/50 text-yellow-500' :
+                          recommendation.status === 'resolved' ? 'bg-green-900/50 text-green-500' :
+                          'bg-red-900/50 text-red-500'
+                        }`}>
+                          {recommendation.status.charAt(0).toUpperCase() + recommendation.status.slice(1)}
+                        </span>
+                        <UpvoteButton
+                          recommendationId={recommendation.id}
+                          initialUpvotesCount={recommendation.upvotes_count}
+                          disabled={recommendation.status !== 'pending'}
+                        />
                       </div>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      Created {new Date(recommendation.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </Card>
-              ))}
+                      {recommendation.admin_response && (
+                        <div className="mt-2 p-3 bg-gray-900/50 rounded-md">
+                          <p className="text-sm text-gray-300">{recommendation.admin_response}</p>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2">
+                        Created {new Date(recommendation.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              {totalRecommendationsPages > 1 && (
+                <Pagination className="mt-4">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentRecommendationsPage(prev => Math.max(1, prev - 1))}
+                        className={currentRecommendationsPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    {[...Array(totalRecommendationsPages)].map((_, i) => (
+                      <PaginationItem key={i + 1}>
+                        <PaginationLink
+                          onClick={() => setCurrentRecommendationsPage(i + 1)}
+                          isActive={currentRecommendationsPage === i + 1}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentRecommendationsPage(prev => Math.min(totalRecommendationsPages, prev + 1))}
+                        className={currentRecommendationsPage === totalRecommendationsPages ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Comments Section */}
+        <div className="mt-8">
+          <h2 className="text-xl md:text-2xl font-bold mb-6">Comments</h2>
+          {!profile.comments || profile.comments.length === 0 ? (
+            <Card className="p-6 bg-[#111] border-gray-800">
+              <p className="text-gray-400 text-center text-sm">No comments yet</p>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                {paginatedComments.map((comment) => (
+                  <Card 
+                    key={comment.id} 
+                    className="bg-[#111] border-gray-800 p-4"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => router.push(`/videos/${comment.video_id}`)}
+                        className="text-sm text-gray-400 hover:text-white text-left transition-colors"
+                      >
+                        On video: {comment.video_title}
+                      </button>
+                      <p className="text-white mt-1">{comment.content}</p>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                        <span>{new Date(comment.created_at).toLocaleDateString()}</span>
+                        {comment.is_edited && (
+                          <span className="text-gray-600">(edited)</span>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              {totalCommentsPages > 1 && (
+                <Pagination className="mt-4">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentCommentsPage(prev => Math.max(1, prev - 1))}
+                        className={currentCommentsPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    {[...Array(totalCommentsPages)].map((_, i) => (
+                      <PaginationItem key={i + 1}>
+                        <PaginationLink
+                          onClick={() => setCurrentCommentsPage(i + 1)}
+                          isActive={currentCommentsPage === i + 1}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentCommentsPage(prev => Math.min(totalCommentsPages, prev + 1))}
+                        className={currentCommentsPage === totalCommentsPages ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           )}
         </div>
