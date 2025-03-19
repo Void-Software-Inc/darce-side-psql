@@ -36,6 +36,7 @@ export default function RecommendationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [createDialog, setCreateDialog] = useState({
     isOpen: false,
     title: '',
@@ -75,7 +76,10 @@ export default function RecommendationsPage() {
   };
 
   const handleCreateRecommendation = async () => {
+    if (isSubmitting) return;
+    
     try {
+      setIsSubmitting(true);
       const res = await fetch('/api/recommendations/create', {
         method: 'POST',
         headers: {
@@ -99,6 +103,8 @@ export default function RecommendationsPage() {
     } catch (error) {
       console.error('Error creating recommendation:', error);
       toast.error(error instanceof Error ? error.message : 'Error creating recommendation');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -283,9 +289,11 @@ export default function RecommendationsPage() {
       {/* Create Dialog */}
       <Dialog 
         open={createDialog.isOpen} 
-        onOpenChange={(isOpen) => 
-          setCreateDialog(prev => ({ ...prev, isOpen }))
-        }
+        onOpenChange={(isOpen) => {
+          if (!isSubmitting) {
+            setCreateDialog(prev => ({ ...prev, isOpen }));
+          }
+        }}
       >
         <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200">
           <DialogHeader>
@@ -302,6 +310,7 @@ export default function RecommendationsPage() {
                 value={createDialog.title}
                 onChange={(e) => setCreateDialog(prev => ({ ...prev, title: e.target.value }))}
                 className="bg-[#222222] border-[#2a2a2a] text-gray-200"
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -311,23 +320,25 @@ export default function RecommendationsPage() {
                 value={createDialog.description}
                 onChange={(e) => setCreateDialog(prev => ({ ...prev, description: e.target.value }))}
                 className="bg-[#222222] border-[#2a2a2a] text-gray-200 min-h-[100px]"
+                disabled={isSubmitting}
               />
             </div>
           </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+          <DialogFooter>
             <Button
               type="submit"
               className="w-full sm:w-auto bg-[#2a2a2a] hover:bg-[#333333] text-white"
               onClick={handleCreateRecommendation}
-              disabled={!createDialog.title.trim() || !createDialog.description.trim()}
+              disabled={!createDialog.title.trim() || !createDialog.description.trim() || isSubmitting}
             >
-              Submit
+              {isSubmitting ? 'Creating...' : 'Submit'}
             </Button>
             <Button
               type="button"
               variant="outline"
               className="w-full sm:w-auto bg-transparent border-gray-800 text-gray-400 hover:bg-[#222222] hover:text-gray-200"
               onClick={() => setCreateDialog({ isOpen: false, title: '', description: '' })}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>

@@ -159,19 +159,33 @@ export default function VideoPage() {
               </div>
               <p className="text-gray-400 whitespace-pre-wrap mb-8">{video.description}</p>
 
+              {/* Video Info for Mobile */}
+              <div className="lg:hidden mb-8">
+                <VideoInfo
+                  author={video.author}
+                  type={video.type}
+                  number_of_videos={video.number_of_videos}
+                  labels={video.labels}
+                  created_by={video.created_by}
+                  created_at={video.created_at}
+                />
+              </div>
+
               <Comments videoId={params.id as string} />
             </div>
           </div>
 
-          {/* Sidebar - Video Information */}
-          <VideoInfo
-            author={video.author}
-            type={video.type}
-            number_of_videos={video.number_of_videos}
-            labels={video.labels}
-            created_by={video.created_by}
-            created_at={video.created_at}
-          />
+          {/* Sidebar - Video Information (Desktop only) */}
+          <div className="hidden lg:block">
+            <VideoInfo
+              author={video.author}
+              type={video.type}
+              number_of_videos={video.number_of_videos}
+              labels={video.labels}
+              created_by={video.created_by}
+              created_at={video.created_at}
+            />
+          </div>
         </div>
       </div>
 
