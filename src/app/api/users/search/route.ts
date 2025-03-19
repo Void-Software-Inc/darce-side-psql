@@ -47,8 +47,10 @@ export async function GET(request: NextRequest) {
       `SELECT 
         u.username,
         u.created_at,
+        u.team,
         (SELECT COUNT(*) FROM video_likes WHERE user_id = u.id) as likes_given,
         (SELECT COUNT(*) FROM video_comments WHERE user_id = u.id) as comments_count,
+        (SELECT COUNT(*) FROM recommendations WHERE created_by = u.id) as created_requests_count,
         (SELECT name FROM roles WHERE id = u.role_id) as role
        FROM users u
        WHERE u.username ILIKE $1

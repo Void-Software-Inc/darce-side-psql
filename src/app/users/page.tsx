@@ -14,6 +14,8 @@ interface User {
   likes_given: number;
   comments_count: number;
   role: string;
+  team: string;
+  created_requests_count: number;
 }
 
 interface PaginationInfo {
@@ -146,15 +148,24 @@ export default function UsersPage() {
                         <MessageSquare className="h-4 w-4" />
                         <span>{user.comments_count}</span>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                        </svg>
+                        <span>{user.created_requests_count}</span>
+                      </div>
                     </div>
 
-                    <div>
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         user.role === 'admin' 
                           ? 'bg-red-900/20 text-red-400 border border-red-900/30' 
                           : 'bg-blue-900/20 text-blue-400 border border-blue-900/30'
                       }`}>
                         {user.role}
+                      </span>
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700">
+                        {user.team || 'No team'}
                       </span>
                     </div>
                   </div>
