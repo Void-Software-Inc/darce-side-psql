@@ -33,6 +33,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user has created a recommendation in the last hour
+    const { rows: recentRecommendations } = await query(
+      `SELECT id FROM recommendations 
+       WHERE created_by = $1 
+       AND created_at > NOW() - INTERVAL '1 hour'`,
+      [decoded.userId]
+    );
+
+    if (recentRecommendations.length > 0) {
+      return NextResponse.json(
+        { success: false, message: 'Please wait at least 1 hour between creating requests' },
+        { status: 429 }
+      );
+    }
+
     const { title, description } = await request.json();
 
     if (!title?.trim() || !description?.trim()) {
