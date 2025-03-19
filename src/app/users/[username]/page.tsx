@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import { CalendarDays, Heart, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 // Function to trim titles to match "Higher Tripod Passing" length (20 characters)
 const trimTitle = (title: string, maxLength: number = 21) => {
@@ -34,6 +36,7 @@ interface UserProfile {
   comments_count: number;
   liked_videos: Video[];
   is_current_user: boolean;
+  team: string;
 }
 
 export default function UserProfilePage() {
@@ -44,11 +47,13 @@ export default function UserProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [likedVideos, setLikedVideos] = useState<{ [key: number]: boolean }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: number]: number }>({});
+  const [isEditingTeam, setIsEditingTeam] = useState(false);
+  const [teamValue, setTeamValue] = useState('');
 
   useEffect(() => {
     async function fetchUserProfile() {
       try {
-        const response = await fetch(`/api/users/${params.username}`);
+        const response = await fetch(`/api/users/${params.username}/get`);
         if (!response.ok) {
           throw new Error('User not found');
         }
@@ -114,6 +119,35 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleTeamEdit = async () => {
+    if (!isEditingTeam) {
+      setTeamValue(profile?.team || '');
+      setIsEditingTeam(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${profile?.username}/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ team: teamValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update team');
+      }
+
+      const data = await response.json();
+      setProfile(prev => prev ? { ...prev, team: teamValue } : null);
+      setIsEditingTeam(false);
+      toast.success('Team updated successfully');
+    } catch (error) {
+      toast.error('Failed to update team');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -137,27 +171,58 @@ export default function UserProfilePage() {
       <div className="container mx-auto px-4">
         {/* User Info Section */}
         <Card className="bg-[#111] border-gray-800 p-6 mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-3xl font-bold mb-2 text-white">
+              <h1 className="text-2xl md:text-3xl font-bold mb-4 text-white flex items-center gap-2 flex-wrap">
                 {profile.username}
                 {profile.is_current_user && (
-                  <span className="ml-2 text-gray-400 text-lg">(you)</span>
+                  <span className="text-base md:text-lg text-gray-400">(you)</span>
                 )}
               </h1>
-              <div className="flex items-center gap-6 text-gray-400">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-gray-400 mb-4">
                 <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
+                  <CalendarDays className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">Joined {new Date(profile.created_at).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Heart className="h-4 w-4" />
-                  <span>{profile.likes_given} likes given</span>
+                  <Heart className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">{profile.likes_given} likes given</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{profile.comments_count} comments</span>
+                  <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">{profile.comments_count} comments</span>
                 </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <span className="text-gray-400 text-sm">Team:</span>
+                {isEditingTeam && profile.is_current_user ? (
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Input
+                      value={teamValue}
+                      onChange={(e) => setTeamValue(e.target.value)}
+                      className="bg-[#222222] border-[#2a2a2a] text-white h-8 w-full sm:w-48"
+                      placeholder="Enter team name"
+                    />
+                    <Button
+                      onClick={handleTeamEdit}
+                      className="h-8 px-3 bg-black hover:bg-[#222222] text-white border border-[#2a2a2a] whitespace-nowrap"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="text-white text-sm">{profile.team || 'No team'}</span>
+                    {profile.is_current_user && (
+                      <Button
+                        onClick={handleTeamEdit}
+                        className="h-8 px-3 bg-black hover:bg-[#222222] text-white border border-[#2a2a2a]"
+                      >
+                        Edit
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -165,13 +230,13 @@ export default function UserProfilePage() {
 
         {/* Liked Videos Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-6">Liked Videos</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-6">Liked Videos</h2>
           {profile.liked_videos.length === 0 ? (
             <Card className="p-6 bg-[#111] border-gray-800">
-              <p className="text-gray-400 text-center">No liked videos yet</p>
+              <p className="text-gray-400 text-center text-sm">No liked videos yet</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {profile.liked_videos.map((video) => (
                 <Card 
                   key={video.id} 
@@ -183,13 +248,15 @@ export default function UserProfilePage() {
                       src={video.image_url} 
                       alt={video.title}
                       fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                       className="object-contain"
                       priority={false}
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{trimTitle(video.title)}</h3>
+                    <h3 className="text-base md:text-lg font-semibold mb-1 text-white line-clamp-2">
+                      {trimTitle(video.title)}
+                    </h3>
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-gray-400">by {video.author}</p>
                       <div className="flex items-center gap-3">

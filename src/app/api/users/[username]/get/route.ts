@@ -28,7 +28,7 @@ export async function GET(
 
     // Get user information
     const userResult = await query(
-      `SELECT id, username, created_at
+      `SELECT id, username, created_at, team
        FROM users
        WHERE username = $1`,
       [params.username]
@@ -46,7 +46,7 @@ export async function GET(
     // Get videos liked by the user
     const likedVideosResult = await query(
       `SELECT v.id, v.title, v.description, v.image_url, v.type, 
-              v.author, v.created_at, u.username as created_by,
+              v.author, v.created_at, u.username as created_by, 
               vl.created_at as liked_at, v.likes_count, v.comments_count
        FROM video_likes vl
        JOIN videos v ON vl.video_id = v.id
@@ -81,6 +81,7 @@ export async function GET(
       user: {
         username: user.username,
         created_at: user.created_at,
+        team: user.team,
         likes_given: parseInt(likesGivenCount.rows[0].count),
         comments_count: parseInt(commentsCount.rows[0].count),
         liked_videos: likedVideosResult.rows,
