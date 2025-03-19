@@ -44,12 +44,12 @@ export async function POST(request: NextRequest) {
     
     // Parse request body
     const body = await request.json();
-    const { username, email, password, role, useDemoSalt = true, customSalt } = body;
+    const { username, email, password, role, team, useDemoSalt = true, customSalt } = body;
     
     // Validate input
-    if (!username || !email || !password || !role) {
+    if (!username || !email || !password || !role || !team) {
       return NextResponse.json(
-        { success: false, message: 'Username, email, password, and role are required' },
+        { success: false, message: 'Username, email, password, role, and team are required' },
         { status: 400 }
       );
     }
@@ -72,10 +72,10 @@ export async function POST(request: NextRequest) {
     
     // Insert new user
     const insertResult = await query(
-      `INSERT INTO users (username, email, password_hash, role_id)
-       VALUES ($1, $2, $3, (SELECT id FROM roles WHERE name = $4))
+      `INSERT INTO users (username, email, password_hash, role_id, team)
+       VALUES ($1, $2, $3, (SELECT id FROM roles WHERE name = $4), $5)
        RETURNING id`,
-      [username, email, passwordHash, role]
+      [username, email, passwordHash, role, team]
     );
     
     if (insertResult.rowCount === 0) {

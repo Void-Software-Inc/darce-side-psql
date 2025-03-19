@@ -5,10 +5,10 @@ import { query } from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, email, password, accessCode } = body;
+    const { username, email, password, team, accessCode } = body;
 
     // Validate required fields
-    if (!username || !email || !password || !accessCode) {
+    if (!username || !email || !password || !accessCode || !team) {
       return NextResponse.json(
         { success: false, message: 'All fields are required' },
         { status: 400 }
@@ -52,10 +52,10 @@ export async function POST(request: NextRequest) {
     try {
       // Create the user
       const userResult = await query(
-        `INSERT INTO users (username, email, password_hash, role_id)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO users (username, email, password_hash, role_id, team)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING id`,
-        [username, email, hashedPassword, roleId]
+        [username, email, hashedPassword, roleId, team]
       );
 
       // Mark the access code as used

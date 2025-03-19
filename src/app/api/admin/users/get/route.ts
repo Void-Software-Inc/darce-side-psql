@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     
     // Get all users
     const usersResult = await query(
-      `SELECT u.id, u.username, u.email, r.name as role, u.created_at, u.last_login
+      `SELECT u.id, u.username, u.email, r.name as role, u.created_at, u.last_login, u.team
        FROM users u
        JOIN roles r ON u.role_id = r.id
        ORDER BY u.created_at DESC`

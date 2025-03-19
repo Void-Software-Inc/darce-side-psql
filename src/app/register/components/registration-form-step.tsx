@@ -11,6 +11,7 @@ interface RegistrationFormData {
   email: string;
   password: string;
   confirmPassword: string;
+  team: string;
 }
 
 interface RegistrationFormStepProps {
@@ -24,7 +25,8 @@ export default function RegistrationFormStep({ accessCode, onRegistered }: Regis
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    team: ''
   });
 
   const handleRegister = async () => {
@@ -43,6 +45,7 @@ export default function RegistrationFormStep({ accessCode, onRegistered }: Regis
           username: formData.username,
           email: formData.email,
           password: formData.password,
+          team: formData.team,
           accessCode
         }),
       });
@@ -90,6 +93,16 @@ export default function RegistrationFormStep({ accessCode, onRegistered }: Regis
             value={formData.email}
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             placeholder="Enter your email"
+            className="bg-[#222222] border-[#2a2a2a] text-white"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="team" className="text-white">Team</Label>
+          <Input
+            id="team"
+            value={formData.team}
+            onChange={(e) => setFormData(prev => ({ ...prev, team: e.target.value }))}
+            placeholder="Enter your team name"
             className="bg-[#222222] border-[#2a2a2a] text-white"
           />
         </div>

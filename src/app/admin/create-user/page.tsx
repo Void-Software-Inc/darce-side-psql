@@ -8,7 +8,8 @@ export default function CreateUserPage() {
     username: '',
     email: '',
     password: '',
-    role: 'user'
+    role: 'user',
+    team: ''
   });
   
   const [result, setResult] = useState<{
@@ -41,6 +42,7 @@ export default function CreateUserPage() {
           email: formData.email,
           password: formData.password,
           role: formData.role,
+          team: formData.team,
           useDemoSalt: false
         })
       });
@@ -56,7 +58,8 @@ export default function CreateUserPage() {
           username: '',
           email: '',
           password: '',
-          role: 'user'
+          role: 'user',
+          team: ''
         });
       }
       
@@ -126,6 +129,21 @@ export default function CreateUserPage() {
                   required
                   className="mt-1 block w-full bg-[#222222] border border-[#2a2a2a] rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-gray-700"
                   value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="team" className="block text-sm font-medium text-gray-200">
+                  Team
+                </label>
+                <input
+                  type="text"
+                  id="team"
+                  name="team"
+                  required
+                  className="mt-1 block w-full bg-[#222222] border border-[#2a2a2a] rounded-md shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-gray-700"
+                  value={formData.team}
                   onChange={handleChange}
                 />
               </div>
