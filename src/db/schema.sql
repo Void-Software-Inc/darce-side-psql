@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role_id INTEGER NOT NULL REFERENCES roles(id),
+    team VARCHAR(100),
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -413,4 +414,123 @@ VALUES (
     'demo-salt:8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
     (SELECT id FROM roles WHERE name = 'admin')
 )
-ON CONFLICT (username) DO NOTHING; 
+ON CONFLICT (username) DO NOTHING;
+
+-- New tables for recommendations
+CREATE TYPE recommendation_status AS ENUM ('pending', 'denied', 'resolved');
+
+CREATE TABLE IF NOT EXISTS recommendations (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status recommendation_status DEFAULT 'pending',
+    upvotes_count INTEGER DEFAULT 0,
+    admin_response TEXT,
+    resolved_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS recommendation_upvotes (
+    id SERIAL PRIMARY KEY,
+    recommendation_id INTEGER NOT NULL REFERENCES recommendations(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(recommendation_id, user_id)
+);
+
+-- Trigger for recommendation upvotes count
+CREATE OR REPLACE FUNCTION update_recommendation_upvotes_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE recommendations SET upvotes_count = upvotes_count + 1 WHERE id = NEW.recommendation_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE recommendations SET upvotes_count = upvotes_count - 1 WHERE id = OLD.recommendation_id;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_recommendation_upvotes_count_trigger
+    AFTER INSERT OR DELETE ON recommendation_upvotes
+    FOR EACH ROW
+    EXECUTE FUNCTION update_recommendation_upvotes_count();
+
+-- Updated timestamp trigger for recommendations
+CREATE TRIGGER update_recommendations_modtime
+    BEFORE UPDATE ON recommendations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_modified_column();
+
+-- Enable RLS for new tables
+ALTER TABLE recommendations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recommendation_upvotes ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for recommendations table
+CREATE POLICY recommendations_view_policy ON recommendations
+    FOR SELECT
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL
+    );
+
+CREATE POLICY recommendations_insert_policy ON recommendations
+    FOR INSERT
+    TO PUBLIC
+    WITH CHECK (
+        get_current_user_id() IS NOT NULL AND
+        get_current_user_id() = created_by
+    );
+
+CREATE POLICY recommendations_update_policy ON recommendations
+    FOR UPDATE
+    TO PUBLIC
+    USING (
+        get_current_user_role() = 'admin'
+    );
+
+-- RLS Policies for recommendation_upvotes table
+CREATE POLICY recommendation_upvotes_view_policy ON recommendation_upvotes
+    FOR SELECT
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL
+    );
+
+CREATE POLICY recommendation_upvotes_insert_policy ON recommendation_upvotes
+    FOR INSERT
+    TO PUBLIC
+    WITH CHECK (
+        get_current_user_id() IS NOT NULL AND
+        get_current_user_id() = user_id AND
+        EXISTS (
+            SELECT 1 FROM recommendations 
+            WHERE id = recommendation_id 
+            AND status = 'pending'
+        )
+    );
+
+CREATE POLICY recommendation_upvotes_delete_policy ON recommendation_upvotes
+    FOR DELETE
+    TO PUBLIC
+    USING (
+        get_current_user_id() IS NOT NULL AND
+        get_current_user_id() = user_id
+    );
+
+-- Add new permissions for recommendations
+INSERT INTO permissions (name, description) VALUES
+    ('recommend', 'Can create video recommendations'),
+    ('upvote', 'Can upvote recommendations')
+ON CONFLICT (name) DO NOTHING;
+
+-- Grant recommend and upvote permissions to users
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 
+    (SELECT id FROM roles WHERE name = 'user'),
+    id
+FROM permissions 
+WHERE name IN ('recommend', 'upvote')
+ON CONFLICT (role_id, permission_id) DO NOTHING; 

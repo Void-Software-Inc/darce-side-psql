@@ -28,6 +28,7 @@ interface User {
   email: string;
   role: string;
   created_at: string;
+  last_login: string | null;
 }
 
 const USERS_PER_PAGE = 5;
@@ -120,6 +121,7 @@ export default function UsersOverview() {
             <TableHead className="text-gray-400 font-medium hidden md:table-cell">Email</TableHead>
             <TableHead className="text-gray-400 font-medium">Role</TableHead>
             <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Joined</TableHead>
+            <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Last Login</TableHead>
             <TableHead className="text-gray-400 font-medium">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -134,6 +136,9 @@ export default function UsersOverview() {
               </TableCell>
               <TableCell className="py-3">
                 <div className="h-4 bg-gray-800 rounded animate-pulse w-16"></div>
+              </TableCell>
+              <TableCell className="py-3 hidden sm:table-cell">
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
               </TableCell>
               <TableCell className="py-3 hidden sm:table-cell">
                 <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
@@ -184,6 +189,7 @@ export default function UsersOverview() {
                   <TableHead className="text-gray-400 font-medium hidden md:table-cell">Email</TableHead>
                   <TableHead className="text-gray-400 font-medium">Role</TableHead>
                   <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Joined</TableHead>
+                  <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Last Login</TableHead>
                   <TableHead className="text-gray-400 font-medium">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -213,6 +219,12 @@ export default function UsersOverview() {
                     </TableCell>
                     <TableCell className="text-gray-200 py-3 hidden sm:table-cell">
                       {new Date(user.created_at).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-gray-200 py-3 hidden sm:table-cell">
+                      {user.last_login 
+                        ? new Date(user.last_login).toLocaleString()
+                        : 'Never'
+                      }
                     </TableCell>
                     <TableCell className="py-3 text-left">
                       <Button
