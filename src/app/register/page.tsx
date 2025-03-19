@@ -18,7 +18,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#111111] p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-[#111111] p-4">
       <div className="w-full max-w-md bg-[#1a1a1a] rounded-lg shadow-xl p-6">
         <Steps numSteps={2} currentStep={step} completedSteps={completedSteps} />
         

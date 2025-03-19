@@ -70,13 +70,29 @@ export default function Navbar() {
     try {
       const res = await fetch('/api/auth/logout', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'  // Important for handling cookies
       });
-      if (res.ok) {
-        setUser(null);
-        window.location.href = '/';
+
+      if (!res.ok) {
+        throw new Error('Logout failed');
       }
+
+      // Clear user state
+      setUser(null);
+      
+      // Small delay to ensure session is cleared
+      setTimeout(() => {
+        // Use replace instead of push to prevent back navigation
+        router.replace('/login');
+      }, 100);
+
     } catch (error) {
       console.error('Logout error:', error);
+      // Fallback: force navigation to login
+      router.replace('/login');
     }
   };
 

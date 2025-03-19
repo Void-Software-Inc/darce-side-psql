@@ -2,11 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { Heart, MessageSquare } from 'lucide-react';
-import { toast } from 'sonner';
 import { VideoCarousel } from '@/components/VideoCarousel';
 
 interface User {
@@ -30,119 +25,6 @@ interface Video {
   created_by: string;
   likes_count: number;
   comments_count: number;
-}
-
-function VideoGrid({ videos }: { videos: Video[] }) {
-  const router = useRouter();
-  const [likedVideos, setLikedVideos] = useState<Record<number, boolean>>({});
-  const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
-
-  useEffect(() => {
-    // Initialize like counts from videos
-    const initialLikeCounts = videos.reduce((acc, video) => {
-      acc[video.id] = video.likes_count;
-      return acc;
-    }, {} as Record<number, number>);
-    setLikeCounts(initialLikeCounts);
-
-    // Check which videos are liked by the current user
-    videos.forEach(async (video) => {
-      try {
-        const res = await fetch(`/api/videos/likes/get?videoId=${video.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setLikedVideos(prev => ({
-            ...prev,
-            [video.id]: data.hasLiked
-          }));
-        }
-      } catch (error) {
-        console.error('Error checking video like:', error);
-      }
-    });
-  }, [videos]);
-
-  const handleLike = async (e: React.MouseEvent, videoId: number) => {
-    e.stopPropagation(); // Prevent navigation when clicking the like button
-    
-    try {
-      const res = await fetch('/api/videos/likes/toggle', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ videoId }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setLikedVideos(prev => ({
-          ...prev,
-          [videoId]: data.action === 'added'
-        }));
-        setLikeCounts(prev => ({
-          ...prev,
-          [videoId]: data.likesCount
-        }));
-      }
-    } catch (error) {
-      toast.error('Failed to update like');
-    }
-  };
-
-  if (videos.length === 0) {
-    return (
-      <Card className="p-6 bg-[#111] border-gray-800">
-        <p className="text-gray-400 text-center">No videos available yet.</p>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {videos.map((video) => (
-        <Card 
-          key={video.id} 
-          className="bg-[#111] border-gray-800 overflow-hidden flex flex-col cursor-pointer hover:border-gray-600 transition-colors"
-          onClick={() => router.push(`/videos/${video.id}?title=${encodeURIComponent(video.title)}`)}
-        >
-          <div className="relative aspect-square w-full bg-[#111]">
-            <Image
-              src={video.image_url} 
-              alt={video.title}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
-              className="object-contain"
-              priority={false}
-            />
-          </div>
-          <div className="p-3">
-            <h3 className="text-lg font-semibold mb-1 text-white line-clamp-2">{video.title}</h3>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-400">by {video.author}</p>
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 text-sm text-gray-400">
-                  <MessageSquare className="h-4 w-4" />
-                  {video.comments_count || 0}
-                </span>
-                <button
-                  onClick={(e) => handleLike(e, video.id)}
-                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                >
-                  <Heart
-                    className={`h-4 w-4 ${
-                      likedVideos[video.id] ? 'fill-red-500 text-red-500' : 'fill-none'
-                    }`}
-                  />
-                  <span>{likeCounts[video.id] || 0}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
 }
 
 export default function Home() {
@@ -204,7 +86,7 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="fixed inset-0 bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tighter">
             DARCE SIDE
