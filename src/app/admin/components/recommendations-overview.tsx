@@ -57,6 +57,16 @@ export default function RecommendationsOverview() {
     response: ''
   });
 
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    recommendationId: number | null;
+    title: string;
+  }>({
+    isOpen: false,
+    recommendationId: null,
+    title: ''
+  });
+
   // Filter recommendations based on search query
   const filteredRecommendations = recommendations.filter(recommendation => 
     recommendation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,6 +136,29 @@ export default function RecommendationsOverview() {
       toast.error(error instanceof Error ? error.message : 'Error updating recommendation');
     } finally {
       setActionDialog({ isOpen: false, recommendationId: null, title: '', action: null, response: '' });
+    }
+  };
+
+  const handleDelete = async (recommendationId: number) => {
+    try {
+      const res = await fetch(`/api/admin/recommendations/delete?id=${recommendationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success('Recommendation deleted successfully');
+        fetchRecommendations();
+      } else {
+        throw new Error(data.message || 'Failed to delete recommendation');
+      }
+    } catch (error) {
+      console.error('Error deleting recommendation:', error);
+      toast.error(error instanceof Error ? error.message : 'Error deleting recommendation');
     }
   };
 
@@ -273,6 +306,18 @@ export default function RecommendationsOverview() {
                             </Button>
                           </>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                          onClick={() => setDeleteDialog({
+                            isOpen: true,
+                            recommendationId: recommendation.id,
+                            title: recommendation.title
+                          })}
+                        >
+                          Delete
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -355,6 +400,47 @@ export default function RecommendationsOverview() {
               variant="outline"
               className="w-full sm:w-auto bg-transparent border-gray-800 text-gray-400 hover:bg-[#222222] hover:text-gray-200"
               onClick={() => setActionDialog({ isOpen: false, recommendationId: null, title: '', action: null, response: '' })}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog 
+        open={deleteDialog.isOpen} 
+        onOpenChange={(isOpen) => 
+          setDeleteDialog(prev => ({ ...prev, isOpen }))
+        }
+      >
+        <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200 mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Delete Recommendation
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete the recommendation "{deleteDialog.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                if (deleteDialog.recommendationId) {
+                  handleDelete(deleteDialog.recommendationId);
+                  setDeleteDialog({ isOpen: false, recommendationId: null, title: '' });
+                }
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto bg-transparent border-gray-800 text-gray-400 hover:bg-[#222222] hover:text-gray-200"
+              onClick={() => setDeleteDialog({ isOpen: false, recommendationId: null, title: '' })}
             >
               Cancel
             </Button>
