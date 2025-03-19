@@ -6,14 +6,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UsersOverview from './components/users-overview';
 import VideosOverview from './components/videos-overview';
 import CodesOverview from './components/codes-overview';
+import RecommendationsOverview from './components/recommendations-overview';
 import Link from 'next/link';
 import { Video, UserPlus, Key } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateCode = () => {
-    document.dispatchEvent(new CustomEvent('generate-code'));
+  const handleGenerateCode = async () => {
+    try {
+      setIsGenerating(true);
+      const res = await fetch('/api/admin/codes/create', {
+        method: 'POST'
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        toast.success('Access code generated successfully');
+        // Trigger a refresh of the codes list
+        document.dispatchEvent(new CustomEvent('refresh-codes'));
+      } else {
+        throw new Error(data.message || 'Failed to generate access code');
+      }
+    } catch (error) {
+      console.error('Error generating code:', error);
+      toast.error(error instanceof Error ? error.message : 'Error generating access code');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -23,7 +46,7 @@ export default function AdminPage() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">Admin Dashboard</h1>
-            <p className="text-gray-400">Manage users, videos, and access codes</p>
+            <p className="text-gray-400">Manage users, videos, recommendations, and access codes</p>
           </div>
 
           {/* Create Buttons */}
@@ -52,6 +75,7 @@ export default function AdminPage() {
               variant="outline"
               className="w-full sm:w-auto bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 border-[#2a2a2a] flex items-center gap-2 hover:text-white"
               onClick={handleGenerateCode}
+              disabled={isGenerating}
             >
               <Key className="h-4 w-4" />
               <span className="hidden sm:inline">Generate Code</span>
@@ -80,6 +104,12 @@ export default function AdminPage() {
               Videos
             </TabsTrigger>
             <TabsTrigger 
+              value="recommendations"
+              className="data-[state=active]:bg-[#2a2a2a] data-[state=active]:text-white"
+            >
+              Recommendations
+            </TabsTrigger>
+            <TabsTrigger 
               value="codes"
               className="data-[state=active]:bg-[#2a2a2a] data-[state=active]:text-white"
             >
@@ -91,6 +121,9 @@ export default function AdminPage() {
           </TabsContent>
           <TabsContent value="videos" className="mt-6">
             <VideosOverview />
+          </TabsContent>
+          <TabsContent value="recommendations" className="mt-6">
+            <RecommendationsOverview />
           </TabsContent>
           <TabsContent value="codes" className="mt-6">
             <CodesOverview />
