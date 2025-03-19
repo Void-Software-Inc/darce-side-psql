@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
 
 interface VideoInfoProps {
   author: string;
@@ -18,6 +19,8 @@ export function VideoInfo({
   created_by,
   created_at
 }: VideoInfoProps) {
+  const router = useRouter();
+
   return (
     <div className="space-y-6">
       <Card className="bg-[#111] border-gray-800 p-6">
@@ -62,7 +65,12 @@ export function VideoInfo({
 
           <div>
             <h3 className="text-sm text-gray-400 mb-1">Added By</h3>
-            <p className="text-white">{created_by}</p>
+            <button
+              onClick={() => router.push(`/users/${created_by}`)}
+              className="text-white hover:underline focus:outline-none"
+            >
+              {created_by}
+            </button>
           </div>
 
           <div>
