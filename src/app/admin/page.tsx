@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import UsersOverview from './components/users-overview';
 import VideosOverview from './components/videos-overview';
 import CodesOverview from './components/codes-overview';
@@ -14,6 +22,7 @@ import { toast } from 'sonner';
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('users');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generateDialog, setGenerateDialog] = useState(false);
 
   const handleGenerateCode = async () => {
     try {
@@ -36,6 +45,7 @@ export default function AdminPage() {
       toast.error(error instanceof Error ? error.message : 'Error generating access code');
     } finally {
       setIsGenerating(false);
+      setGenerateDialog(false);
     }
   };
 
@@ -74,7 +84,7 @@ export default function AdminPage() {
             <Button
               variant="outline"
               className="w-full sm:w-auto bg-[#222222] hover:bg-[#2a2a2a] text-gray-200 border-[#2a2a2a] flex items-center gap-2 hover:text-white"
-              onClick={handleGenerateCode}
+              onClick={() => setGenerateDialog(true)}
               disabled={isGenerating}
             >
               <Key className="h-4 w-4" />
@@ -130,6 +140,39 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog 
+        open={generateDialog} 
+        onOpenChange={setGenerateDialog}
+      >
+        <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200 mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white">Generate Access Code</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to generate a new invite code? This code will be available for one-time use.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+            <Button
+              type="button"
+              className="w-full sm:w-auto bg-[#2a2a2a] hover:bg-[#333333] text-white"
+              onClick={handleGenerateCode}
+              disabled={isGenerating}
+            >
+              {isGenerating ? 'Generating...' : 'Generate'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto bg-transparent border-gray-800 text-gray-400 hover:bg-[#222222] hover:text-gray-200"
+              onClick={() => setGenerateDialog(false)}
+              disabled={isGenerating}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

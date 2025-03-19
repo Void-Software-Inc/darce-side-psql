@@ -222,51 +222,52 @@ export default function RecommendationsPage() {
         </div>
 
         {/* Recommendations List */}
-        <div className="grid gap-4">
+        <div className="space-y-4">
           {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="w-8 h-8 border-4 border-gray-800 border-t-gray-400 rounded-full animate-spin"></div>
-            </div>
+            <LoadingSkeleton />
           ) : filteredRecommendations.length > 0 ? (
             filteredRecommendations.map((recommendation) => (
               <div
                 key={recommendation.id}
-                className={`bg-[#111] border ${
-                  recommendation.status === 'pending'
-                    ? 'border-gray-800'
-                    : recommendation.status === 'resolved'
-                    ? 'border-green-900/30'
-                    : 'border-red-900/30'
-                } rounded-lg p-4`}
+                className="p-4 rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] space-y-3"
               >
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-white">
-                    {recommendation.title}
-                  </h3>
-                  <p className="text-gray-400">{recommendation.description}</p>
-                  {recommendation.admin_response && (
-                    <div className="mt-4 p-3 bg-[#1a1a1a] rounded border border-gray-800">
-                      <p className="text-sm text-gray-300">
-                        <span className="font-semibold text-gray-400">Admin Response: </span>
-                        {recommendation.admin_response}
-                      </p>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between text-sm text-gray-400">
-                    <button
-                      onClick={() => router.push(`/users/${recommendation.created_by}`)}
-                      className="hover:underline focus:outline-none"
-                    >
-                      By {recommendation.created_by}
-                    </button>
-                    <div className="flex items-center gap-4">
-                      <UpvoteButton
-                        recommendationId={recommendation.id}
-                        initialUpvotesCount={recommendation.upvotes_count}
-                        disabled={recommendation.status !== 'pending'}
-                      />
-                      <span>{new Date(recommendation.created_at).toLocaleDateString()}</span>
-                    </div>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{recommendation.title}</h3>
+                    <p className="text-gray-400 mt-1">{recommendation.description}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    recommendation.status === 'resolved'
+                      ? 'bg-green-900/20 text-green-400 border border-green-900/30'
+                      : recommendation.status === 'denied'
+                      ? 'bg-red-900/20 text-red-400 border border-red-900/30'
+                      : 'bg-yellow-900/20 text-yellow-400 border border-yellow-900/30'
+                  }`}>
+                    {recommendation.status.charAt(0).toUpperCase() + recommendation.status.slice(1)}
+                  </span>
+                </div>
+
+                {recommendation.admin_response && (
+                  <div className="mt-4 p-3 rounded bg-[#222222] border border-[#2a2a2a]">
+                    <p className="text-sm text-gray-400">Admin Response:</p>
+                    <p className="text-gray-200 mt-1">{recommendation.admin_response}</p>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-sm text-gray-400">
+                  <button
+                    onClick={() => router.push(`/users/${recommendation.created_by}`)}
+                    className="hover:underline focus:outline-none"
+                  >
+                    By {recommendation.created_by}
+                  </button>
+                  <div className="flex items-center gap-4">
+                    <UpvoteButton
+                      recommendationId={recommendation.id}
+                      initialUpvotesCount={recommendation.upvotes_count}
+                      disabled={recommendation.status !== 'pending'}
+                    />
+                    <span>{new Date(recommendation.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>
