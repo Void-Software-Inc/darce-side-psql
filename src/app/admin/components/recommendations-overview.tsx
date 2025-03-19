@@ -47,7 +47,7 @@ export default function RecommendationsOverview() {
     isOpen: boolean;
     recommendationId: number | null;
     title: string;
-    action: 'resolve' | 'deny' | null;
+    action: 'resolved' | 'denied' | null;
     response: string;
   }>({
     isOpen: false,
@@ -251,7 +251,7 @@ export default function RecommendationsOverview() {
                                 isOpen: true,
                                 recommendationId: recommendation.id,
                                 title: recommendation.title,
-                                action: 'resolve',
+                                action: 'resolved',
                                 response: ''
                               })}
                             >
@@ -265,7 +265,7 @@ export default function RecommendationsOverview() {
                                 isOpen: true,
                                 recommendationId: recommendation.id,
                                 title: recommendation.title,
-                                action: 'deny',
+                                action: 'denied',
                                 response: ''
                               })}
                             >
@@ -326,7 +326,7 @@ export default function RecommendationsOverview() {
         <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a] text-gray-200 mx-auto">
           <DialogHeader>
             <DialogTitle className="text-white">
-              {actionDialog.action === 'resolve' ? 'Resolve' : 'Deny'} Recommendation
+              {actionDialog.action === 'resolved' ? 'Resolve' : 'Deny'} Recommendation
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               Add a response for the recommendation "{actionDialog.title}"
@@ -343,12 +343,12 @@ export default function RecommendationsOverview() {
           <DialogFooter className="flex flex-col sm:flex-row gap-3">
             <Button
               type="button"
-              variant={actionDialog.action === 'resolve' ? 'default' : 'destructive'}
+              variant={actionDialog.action === 'resolved' ? 'default' : 'destructive'}
               className="w-full sm:w-auto"
               onClick={handleAction}
               disabled={!actionDialog.response.trim()}
             >
-              {actionDialog.action === 'resolve' ? 'Resolve' : 'Deny'}
+              {actionDialog.action === 'resolved' ? 'Resolve' : 'Deny'}
             </Button>
             <Button
               type="button"
