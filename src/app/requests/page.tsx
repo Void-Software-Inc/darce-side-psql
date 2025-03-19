@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Search } from 'lucide-react';
+import UpvoteButton from './components/UpvoteButton';
 
 interface Recommendation {
   id: number;
@@ -125,7 +126,7 @@ export default function RecommendationsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white mb-2">Recommendations</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">Requests</h1>
             <p className="text-gray-400">Suggest new videos or improvements</p>
           </div>
 
@@ -185,7 +186,11 @@ export default function RecommendationsPage() {
                 <div className="flex items-center justify-between text-sm text-gray-400">
                   <span>By {recommendation.created_by}</span>
                   <div className="flex items-center gap-4">
-                    <span>{recommendation.upvotes_count} upvotes</span>
+                    <UpvoteButton
+                      recommendationId={recommendation.id}
+                      initialUpvotesCount={recommendation.upvotes_count}
+                      disabled={recommendation.status !== 'pending'}
+                    />
                     <span>{new Date(recommendation.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>

@@ -176,12 +176,12 @@ export default function Navbar() {
                 Videos
               </Button>
             </Link>
-            <Link href="/recommendations">
+            <Link href="/requests">
               <Button 
                 variant="ghost" 
                 className="text-gray-400 hover:text-gray-300 hover:bg-[#111] transition-all duration-300 cursor-pointer"
               >
-                Recommendations
+                Requests
               </Button>
             </Link>
             {isAdmin && (
@@ -232,12 +232,12 @@ export default function Navbar() {
                   Videos
                 </Button>
               </Link>
-              <Link href="/recommendations" className="w-full">
+              <Link href="/requests" className="w-full">
                 <Button 
                   variant="ghost" 
                   className="w-full text-left text-gray-400 hover:text-gray-300 hover:bg-[#222] transition-all duration-300 h-12"
                 >
-                  Recommendations
+                  Requests
                 </Button>
               </Link>
               {isAdmin && (
