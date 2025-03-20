@@ -12,9 +12,9 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Soft delete by setting active = false
+    // Soft delete by setting is_active = false
     await query(
-      'UPDATE videos SET active = false WHERE id = $1',
+      'UPDATE videos SET is_active = false WHERE id = $1',
       [videoId]
     );
 
