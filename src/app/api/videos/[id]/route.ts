@@ -36,6 +36,9 @@ export async function GET(
       );
     }
 
+    // Get video ID from params and await it
+    const { id } = await params;
+
     // Get the video by ID
     const videoResult = await query(
       `SELECT v.id, v.title, v.description, v.image_url, v.playlist_url, 
@@ -44,7 +47,7 @@ export async function GET(
        FROM videos v
        JOIN users u ON v.created_by = u.id
        WHERE v.is_active = true AND v.id = $1`,
-      [params.id]
+      [id]
     );
 
     if (videoResult.rows.length === 0) {
