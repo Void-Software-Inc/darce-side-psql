@@ -46,12 +46,13 @@ function SearchComponent({ onSearch }: { onSearch: (query: string) => void }) {
 
 export default function UsersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [pagination, setPagination] = useState<PaginationInfo>({
-    currentPage: 1,
+    currentPage: parseInt(searchParams.get('page') || '1'),
     totalPages: 1,
     totalUsers: 0,
     usersPerPage: 12
@@ -61,6 +62,7 @@ export default function UsersPage() {
 
   const fetchUsers = async (page: number, search: string) => {
     try {
+      setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
         q: search
@@ -80,22 +82,16 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const page = parseInt(searchParams.get('page') || '1');
-    fetchUsers(page, debouncedSearch);
-
-    // Update URL with search params
-    const params = new URLSearchParams(searchParams);
-    params.set('q', debouncedSearch);
-    if (debouncedSearch === '') {
-      params.delete('q');
-    }
-    router.push(`/users?${params.toString()}`);
-  }, [debouncedSearch]);
+    const currentPage = parseInt(searchParams.get('page') || '1');
+    fetchUsers(currentPage, debouncedSearch);
+  }, [debouncedSearch, searchParams]);
 
   const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams.toString());
     params.set('page', newPage.toString());
+    if (debouncedSearch) {
+      params.set('q', debouncedSearch);
+    }
     router.push(`/users?${params.toString()}`);
   };
 
