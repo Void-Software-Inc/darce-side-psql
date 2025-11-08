@@ -56,18 +56,31 @@ export const VideoCarousel = ({ title, videos, type }: VideoCarouselProps) => {
   const CAN_SHIFT_LEFT = offset < 0;
   const CAN_SHIFT_RIGHT = Math.abs(offset) < cardSize * (totalItems - CARD_BUFFER);
 
+  // Calculate drag constraints
+  const minOffset = -cardSize * (totalItems - CARD_BUFFER);
+  const maxOffset = 0;
+
   const shiftLeft = () => {
     if (!CAN_SHIFT_LEFT) return;
-    setOffset((pv) => (pv += cardSize));
+    setOffset((pv) => Math.min(pv + cardSize, maxOffset));
   };
 
   const shiftRight = () => {
     if (!CAN_SHIFT_RIGHT) return;
-    setOffset((pv) => (pv -= cardSize));
+    setOffset((pv) => Math.max(pv - cardSize, minOffset));
   };
 
   const handleViewMore = () => {
     router.push(`/videos?type=${type}`);
+  };
+
+  // Handle drag end to snap to nearest card
+  const handleDragEnd = (_event: any, info: any) => {
+    const newOffset = offset + info.offset.x;
+    // Calculate nearest snap point
+    const snapPoint = Math.round(newOffset / cardSize) * cardSize;
+    const clampedOffset = Math.max(minOffset, Math.min(maxOffset, snapPoint));
+    setOffset(clampedOffset);
   };
 
   return (
@@ -100,13 +113,24 @@ export const VideoCarousel = ({ title, videos, type }: VideoCarouselProps) => {
           </div>
           <div className="relative">
             <motion.div
+              drag="x"
+              dragConstraints={{
+                left: minOffset,
+                right: maxOffset,
+              }}
+              dragElastic={0.1}
+              dragMomentum={true}
+              onDragEnd={handleDragEnd}
               animate={{
                 x: offset,
               }}
               transition={{
-                ease: "easeInOut",
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                mass: 0.8,
               }}
-              className="flex"
+              className="flex cursor-grab active:cursor-grabbing"
               style={{
                 gap: `${margin}px`,
               }}
