@@ -245,18 +245,28 @@ export default function VideosOverview() {
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
-                        onClick={() => setDeleteDialog({
-                          isOpen: true,
-                          videoId: video.id,
-                          title: video.title
-                        })}
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-950/30"
+                          onClick={() => router.push(`/admin/update-video/${video.id}`)}
+                        >
+                          Update
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                          onClick={() => setDeleteDialog({
+                            isOpen: true,
+                            videoId: video.id,
+                            title: video.title
+                          })}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
