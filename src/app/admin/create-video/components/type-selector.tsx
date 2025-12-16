@@ -31,6 +31,10 @@ const videoTypes = [
     value: "tournament",
     label: "Tournament",
   },
+  {
+    value: "cla",
+    label: "CLA",
+  },
 ]
 
 interface TypeSelectorProps {
