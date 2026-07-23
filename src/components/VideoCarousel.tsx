@@ -6,6 +6,8 @@ import { Heart, MessageSquare, ArrowRight, ChevronLeft, ChevronRight } from "luc
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useSeenCounts, type SeenCount } from "@/lib/hooks/use-seen-counts";
+import { SeenProgress } from "@/components/SeenProgress";
 
 const BREAKPOINTS = {
   sm: 640,
@@ -41,6 +43,7 @@ export const VideoCarousel = ({ title, videos, type }: VideoCarouselProps) => {
   const [ref, { width }] = useMeasure();
   const [offset, setOffset] = useState(0);
   const router = useRouter();
+  const seenCounts = useSeenCounts(videos.map((video) => video.id));
 
   // Calculate card width based on screen size
   const cardWidth = width > BREAKPOINTS.sm ? 350 : width - 48; // 48px for padding
@@ -136,7 +139,7 @@ export const VideoCarousel = ({ title, videos, type }: VideoCarouselProps) => {
               }}
             >
               {displayVideos.map((video) => (
-                <VideoCard key={video.id} video={video} width={cardWidth} margin={0} />
+                <VideoCard key={video.id} video={video} width={cardWidth} margin={0} progress={seenCounts[video.id]} />
               ))}
               
               <ViewMoreCard onClick={handleViewMore} width={cardWidth} margin={0} />
@@ -148,7 +151,7 @@ export const VideoCarousel = ({ title, videos, type }: VideoCarouselProps) => {
   );
 };
 
-const VideoCard = ({ video, width, margin }: { video: Video; width: number; margin: number }) => {
+const VideoCard = ({ video, width, margin, progress }: { video: Video; width: number; margin: number; progress?: SeenCount }) => {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
@@ -232,6 +235,7 @@ const VideoCard = ({ video, width, margin }: { video: Video; width: number; marg
             </button>
           </div>
         </div>
+        <SeenProgress progress={progress} />
       </div>
     </Card>
   );

@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import UpvoteButton from '@/app/requests/components/UpvoteButton';
 import { UserAvatar } from '@/components/UserAvatar';
 import { AvatarSettings } from './components/AvatarSettings';
+import { useSeenCounts } from '@/lib/hooks/use-seen-counts';
+import { SeenProgress } from '@/components/SeenProgress';
 import {
   Pagination,
   PaginationContent,
@@ -86,6 +88,7 @@ export default function UserProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [likedVideos, setLikedVideos] = useState<{ [key: number]: boolean }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: number]: number }>({});
+  const seenCounts = useSeenCounts(profile?.liked_videos.map((video) => video.id) ?? []);
   const [isEditingTeam, setIsEditingTeam] = useState(false);
   const [teamValue, setTeamValue] = useState('');
   const [currentRecommendationsPage, setCurrentRecommendationsPage] = useState(1);
@@ -360,6 +363,7 @@ export default function UserProfilePage() {
                         </button>
                       </div>
                     </div>
+                    <SeenProgress progress={seenCounts[video.id]} />
                   </div>
                 </Card>
               ))}

@@ -10,6 +10,8 @@ import { Heart, MessageSquare, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/lib/hooks/use-debounce';
+import { useSeenCounts } from '@/lib/hooks/use-seen-counts';
+import { SeenProgress } from '@/components/SeenProgress';
 
 interface Video {
   id: number;
@@ -39,6 +41,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
   const router = useRouter();
   const [likedVideos, setLikedVideos] = useState<Record<number, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
+  const seenCounts = useSeenCounts(videos.map((video) => video.id));
 
   useEffect(() => {
     // Initialize like counts from videos
@@ -141,6 +144,7 @@ function VideoGrid({ videos }: { videos: Video[] }) {
                 </button>
               </div>
             </div>
+            <SeenProgress progress={seenCounts[video.id]} />
           </div>
         </Card>
       ))}
