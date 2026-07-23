@@ -135,7 +135,10 @@ export default function VideoPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content - Video and Title */}
           <div className="lg:col-span-2 space-y-6">
-            <YouTubePlayer playlistUrl={video.playlist_url} />
+            <YouTubePlayer
+              playlistUrl={video.playlist_url}
+              storageKey={`video-${video.id}`}
+            />
             
             <div>
               <div className="flex justify-between items-start mb-4">
