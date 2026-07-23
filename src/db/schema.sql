@@ -96,6 +96,19 @@ CREATE TABLE IF NOT EXISTS video_comments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Per-user "seen" flags for the individual YouTube videos inside a video row's
+-- playlist. yt_video_id is the 11-char YouTube id; a row exists iff seen.
+CREATE TABLE IF NOT EXISTS video_views (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    yt_video_id VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, video_id, yt_video_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_video_views_user_video ON video_views (user_id, video_id);
+
 CREATE TABLE IF NOT EXISTS permissions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
