@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
         c.updated_at,
         u.username,
         u.id as user_id,
+        u.avatar_hue,
         (SELECT name FROM roles r WHERE r.id = u.role_id) as user_role
       FROM video_comments c
       JOIN users u ON c.user_id = u.id

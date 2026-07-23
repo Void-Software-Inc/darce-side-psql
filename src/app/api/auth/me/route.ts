@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
         username: user.username,
         email: user.email,
         role: user.role,
-        permissions: user.permissions
+        permissions: user.permissions,
+        avatar_hue: user.avatar_hue ?? null
       }
     });
   } catch (error) {

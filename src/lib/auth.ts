@@ -11,6 +11,7 @@ export interface User {
   role_id: number;
   role?: string;
   permissions?: string[];
+  avatar_hue?: number | null;
 }
 
 export interface UserWithPassword extends User {
@@ -122,7 +123,7 @@ export async function authenticateUser(usernameOrEmail: string, password: string
 export async function getUserById(userId: number): Promise<User | null> {
   try {
     const userResult = await query(
-      `SELECT u.id, u.username, u.email, u.role_id, r.name as role
+      `SELECT u.id, u.username, u.email, u.role_id, u.avatar_hue, r.name as role
        FROM users u
        JOIN roles r ON u.role_id = r.id
        WHERE u.id = $1`,

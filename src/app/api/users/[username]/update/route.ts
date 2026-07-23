@@ -46,34 +46,64 @@ export async function PUT(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { team } = body;
+    const hasTeam = Object.prototype.hasOwnProperty.call(body, 'team');
+    const hasAvatarHue = Object.prototype.hasOwnProperty.call(body, 'avatarHue');
 
-    if (!team) {
+    if (!hasTeam && !hasAvatarHue) {
       return NextResponse.json(
-        { success: false, message: 'Team is required' },
+        { success: false, message: 'Nothing to update' },
         { status: 400 }
       );
     }
 
-    // Update the user's team
+    // Build the update dynamically so team and avatar hue can be changed
+    // independently.
+    const sets: string[] = [];
+    const values: unknown[] = [];
+
+    if (hasTeam) {
+      values.push(body.team);
+      sets.push(`team = $${values.length}`);
+    }
+
+    if (hasAvatarHue) {
+      const { avatarHue } = body;
+      // null clears the override → the avatar falls back to the username hue.
+      let hue: number | null = null;
+      if (avatarHue !== null && avatarHue !== undefined) {
+        hue = Number(avatarHue);
+        if (!Number.isInteger(hue) || hue < 0 || hue > 360) {
+          return NextResponse.json(
+            { success: false, message: 'avatarHue must be an integer between 0 and 360' },
+            { status: 400 }
+          );
+        }
+      }
+      values.push(hue);
+      sets.push(`avatar_hue = $${values.length}`);
+    }
+
+    values.push(currentUser.id);
+
     const updateResult = await query(
-      `UPDATE users 
-       SET team = $1
-       WHERE id = $2
-       RETURNING id`,
-      [team, currentUser.id]
+      `UPDATE users
+       SET ${sets.join(', ')}
+       WHERE id = $${values.length}
+       RETURNING id, avatar_hue`,
+      values
     );
 
     if (updateResult.rowCount === 0) {
       return NextResponse.json(
-        { success: false, message: 'Failed to update team' },
+        { success: false, message: 'Failed to update profile' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Team updated successfully'
+      message: 'Profile updated successfully',
+      avatar_hue: updateResult.rows[0].avatar_hue ?? null,
     });
   } catch (error) {
     console.error('Error updating user:', error);

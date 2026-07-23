@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
         r.admin_response,
         r.created_at,
         r.updated_at,
-        u.username as created_by
+        u.username as created_by,
+        u.avatar_hue as created_by_hue
       FROM recommendations r
       JOIN users u ON r.created_by = u.id
       ORDER BY 

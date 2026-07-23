@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Search } from 'lucide-react';
 import UpvoteButton from './components/UpvoteButton';
 import { useRouter } from 'next/navigation';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface Recommendation {
   id: number;
@@ -23,6 +24,7 @@ interface Recommendation {
   description: string;
   status: 'pending' | 'denied' | 'resolved';
   created_by: string;
+  created_by_hue?: number | null;
   upvotes_count: number;
   admin_response: string | null;
   created_at: string;
@@ -263,8 +265,9 @@ export default function RecommendationsPage() {
                 <div className="flex items-center justify-between text-sm text-gray-400">
                   <button
                     onClick={() => router.push(`/users/${recommendation.created_by}`)}
-                    className="hover:underline focus:outline-none"
+                    className="flex items-center gap-2 hover:underline focus:outline-none"
                   >
+                    <UserAvatar username={recommendation.created_by} hue={recommendation.created_by_hue} size={24} />
                     By {recommendation.created_by}
                   </button>
                   <div className="flex items-center gap-4">

@@ -31,7 +31,7 @@ export async function GET(
 
     // Get user information
     const userResult = await query(
-      `SELECT id, username, created_at, team
+      `SELECT id, username, created_at, team, avatar_hue
        FROM users
        WHERE username = $1`,
       [username]
@@ -124,6 +124,7 @@ export async function GET(
         username: user.username,
         created_at: user.created_at,
         team: user.team,
+        avatar_hue: user.avatar_hue ?? null,
         likes_given: parseInt(likesGivenCount.rows[0].count),
         comments_count: parseInt(commentsCount.rows[0].count),
         recommendations_count: parseInt(recommendationsCountResult.rows[0].count),

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface Comment {
   id: number;
@@ -15,6 +16,7 @@ interface Comment {
   username: string;
   user_id: number;
   user_role: string;
+  avatar_hue: number | null;
 }
 
 interface CommentsProps {
@@ -161,8 +163,9 @@ export function Comments({ videoId }: CommentsProps) {
                     <div className="flex items-center gap-2 mb-2">
                       <button
                         onClick={() => router.push(`/users/${comment.username}`)}
-                        className="font-semibold text-white hover:underline"
+                        className="flex items-center gap-2 font-semibold text-white hover:underline"
                       >
+                        <UserAvatar username={comment.username} hue={comment.avatar_hue} size={28} />
                         {comment.username}
                       </button>
                       <span className="text-xs text-gray-400">

@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     role_id INTEGER NOT NULL REFERENCES roles(id),
     team VARCHAR(100),
+    -- Chosen hue (0-360) for the generative dither avatar; NULL = derive from username.
+    avatar_hue SMALLINT CHECK (avatar_hue >= 0 AND avatar_hue <= 360),
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

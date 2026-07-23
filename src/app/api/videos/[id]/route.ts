@@ -41,9 +41,10 @@ export async function GET(
 
     // Get the video by ID
     const videoResult = await query(
-      `SELECT v.id, v.title, v.description, v.image_url, v.playlist_url, 
+      `SELECT v.id, v.title, v.description, v.image_url, v.playlist_url,
               v.type, v.author, v.number_of_videos, v.labels,
-              v.created_at, u.username as created_by, v.likes_count, v.comments_count
+              v.created_at, u.username as created_by, u.avatar_hue as created_by_hue,
+              v.likes_count, v.comments_count
        FROM videos v
        JOIN users u ON v.created_by = u.id
        WHERE v.is_active = true AND v.id = $1`,

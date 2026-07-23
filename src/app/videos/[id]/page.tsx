@@ -21,6 +21,7 @@ interface Video {
   labels?: string[];
   created_at: string;
   created_by: string;
+  created_by_hue?: number | null;
   likes_count: number;
 }
 
@@ -170,6 +171,7 @@ export default function VideoPage() {
                   number_of_videos={video.number_of_videos}
                   labels={video.labels}
                   created_by={video.created_by}
+                  created_by_hue={video.created_by_hue}
                   created_at={video.created_at}
                 />
               </div>
@@ -186,6 +188,7 @@ export default function VideoPage() {
               number_of_videos={video.number_of_videos}
               labels={video.labels}
               created_by={video.created_by}
+              created_by_hue={video.created_by_hue}
               created_at={video.created_at}
             />
           </div>

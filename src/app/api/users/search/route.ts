@@ -44,10 +44,11 @@ export async function GET(request: NextRequest) {
 
     // Get users with basic information
     const usersResult = await query(
-      `SELECT 
+      `SELECT
         u.username,
         u.created_at,
         u.team,
+        u.avatar_hue,
         (SELECT COUNT(*) FROM video_likes WHERE user_id = u.id) as likes_given,
         (SELECT COUNT(*) FROM video_comments WHERE user_id = u.id) as comments_count,
         (SELECT COUNT(*) FROM recommendations WHERE created_by = u.id) as created_requests_count,

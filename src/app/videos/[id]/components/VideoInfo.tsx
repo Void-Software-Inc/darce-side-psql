@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface VideoInfoProps {
   author: string;
@@ -8,6 +9,7 @@ interface VideoInfoProps {
   number_of_videos?: number;
   labels?: string[];
   created_by: string;
+  created_by_hue?: number | null;
   created_at: string;
 }
 
@@ -17,6 +19,7 @@ export function VideoInfo({
   number_of_videos,
   labels,
   created_by,
+  created_by_hue,
   created_at
 }: VideoInfoProps) {
   const router = useRouter();
@@ -67,8 +70,9 @@ export function VideoInfo({
             <h3 className="text-sm text-gray-400 mb-1">Added By</h3>
             <button
               onClick={() => router.push(`/users/${created_by}`)}
-              className="text-white hover:underline focus:outline-none"
+              className="flex items-center gap-2 text-white hover:underline focus:outline-none"
             >
+              <UserAvatar username={created_by} hue={created_by_hue} size={28} />
               {created_by}
             </button>
           </div>

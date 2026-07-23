@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import UpvoteButton from '@/app/requests/components/UpvoteButton';
+import { UserAvatar } from '@/components/UserAvatar';
+import { AvatarSettings } from './components/AvatarSettings';
 import {
   Pagination,
   PaginationContent,
@@ -57,6 +59,7 @@ interface UserProfile {
   liked_videos: Video[];
   is_current_user: boolean;
   team: string;
+  avatar_hue: number | null;
   recommendations_count: number;
   recommendations: Recommendation[];
   comments: Comment[];
@@ -225,12 +228,34 @@ export default function UserProfilePage() {
         <Card className="bg-[#111] border-gray-800 p-6 mb-8">
           <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-4 text-white flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl md:text-3xl font-bold mb-4 text-white flex items-center gap-3 flex-wrap">
+                {!profile.is_current_user && (
+                  <UserAvatar
+                    username={profile.username}
+                    hue={profile.avatar_hue}
+                    size={48}
+                    animate
+                  />
+                )}
                 {profile.username}
                 {profile.is_current_user && (
                   <span className="text-base md:text-lg text-gray-400">(you)</span>
                 )}
               </h1>
+
+              {profile.is_current_user && (
+                <div className="mb-6">
+                  <AvatarSettings
+                    username={profile.username}
+                    hue={profile.avatar_hue}
+                    onSaved={(nextHue) =>
+                      setProfile((prev) =>
+                        prev ? { ...prev, avatar_hue: nextHue } : prev
+                      )
+                    }
+                  />
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-gray-400 mb-4">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 flex-shrink-0" />
