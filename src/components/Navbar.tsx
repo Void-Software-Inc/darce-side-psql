@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import React, { Suspense } from 'react';
 import { Menu, X } from 'lucide-react';
+import { ChangelogDialog } from '@/components/ChangelogDialog';
 
 interface User {
   id: number;
@@ -49,7 +50,11 @@ function BreadcrumbsContent({ pathname }: { pathname: string }) {
             </BreadcrumbLink>
           )}
         </BreadcrumbItem>
-        
+
+        <BreadcrumbItem>
+          <ChangelogDialog />
+        </BreadcrumbItem>
+
         {paths.map((path, index) => {
           const href = `/${paths.slice(0, index + 1).join('/')}`;
           const isLast = index === paths.length - 1;
