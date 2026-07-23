@@ -139,6 +139,7 @@ export default function VideoPage() {
             <YouTubePlayer
               playlistUrl={video.playlist_url}
               storageKey={`video-${video.id}`}
+              dbVideoId={video.id}
             />
             
             <div>

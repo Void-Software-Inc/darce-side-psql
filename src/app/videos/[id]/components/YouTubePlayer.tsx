@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  CheckCircle2,
+  Circle,
   ExternalLink,
   Pause,
   Play,
@@ -22,6 +24,8 @@ interface YouTubePlayerProps {
   playlistUrl: string;
   /** Used to scope the "resume where you left off" memory. */
   storageKey?: string;
+  /** Our video row id — enables per-user "seen" tracking when set. */
+  dbVideoId?: number;
 }
 
 interface MetadataItem {
@@ -97,7 +101,11 @@ function waitForPlaylist(
   });
 }
 
-export function YouTubePlayer({ playlistUrl, storageKey }: YouTubePlayerProps) {
+export function YouTubePlayer({
+  playlistUrl,
+  storageKey,
+  dbVideoId,
+}: YouTubePlayerProps) {
   const { videoId, playlistId, index: urlIndex, startSeconds } =
     parseYouTubeUrl(playlistUrl);
 
@@ -114,6 +122,7 @@ export function YouTubePlayer({ playlistUrl, storageKey }: YouTubePlayerProps) {
   const [shuffle, setShuffle] = useState(false);
   const [loop, setLoop] = useState(false);
   const [sortOverride, setSortOverride] = useState<boolean | null>(null);
+  const [seen, setSeen] = useState<Set<string>>(new Set());
 
   // --- ordering -------------------------------------------------------------
   const numericOrder = useMemo(
@@ -153,6 +162,45 @@ export function YouTubePlayer({ playlistUrl, storageKey }: YouTubePlayerProps) {
   const currentVideoIdRef = useRef(currentVideoId);
   const itemsRef = useRef(items);
   const skipsRef = useRef(0);
+  const seenRef = useRef(seen);
+  // Last video we auto-marked, so re-entering PLAYING doesn't re-mark it.
+  const autoMarkedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    seenRef.current = seen;
+  }, [seen]);
+
+  // Persist a "seen" change for one YouTube video and mirror it locally.
+  // `next` omitted → flip; provided → set outright (used to auto-mark on play).
+  const setSeenFor = useCallback(
+    (ytVideoId: string, next?: boolean) => {
+      if (!dbVideoId || !ytVideoId) return;
+
+      const target = next ?? !seenRef.current.has(ytVideoId);
+
+      setSeen((current) => {
+        const updated = new Set(current);
+        if (target) updated.add(ytVideoId);
+        else updated.delete(ytVideoId);
+        return updated;
+      });
+
+      fetch('/api/videos/views/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId: dbVideoId, ytVideoId, seen: target }),
+      }).catch(() => {
+        // Roll back the optimistic change if the write fails.
+        setSeen((current) => {
+          const reverted = new Set(current);
+          if (target) reverted.delete(ytVideoId);
+          else reverted.add(ytVideoId);
+          return reverted;
+        });
+      });
+    },
+    [dbVideoId]
+  );
 
   useEffect(() => {
     navRef.current = { order, loop, orderedNav };
@@ -299,6 +347,15 @@ export function YouTubePlayer({ playlistUrl, storageKey }: YouTubePlayerProps) {
             if (state === YT.PlayerState.PLAYING) {
               skipsRef.current = 0;
               setError(null);
+
+              // Auto-mark seen once per video, on the transition to it — so
+              // pausing/resuming (or manually un-checking) the current video
+              // doesn't keep re-marking it.
+              const playingId = event.target.getVideoData?.()?.video_id;
+              if (playingId && autoMarkedRef.current !== playingId) {
+                autoMarkedRef.current = playingId;
+                if (!seenRef.current.has(playingId)) setSeenFor(playingId, true);
+              }
             }
 
             if (state === YT.PlayerState.ENDED) {
@@ -428,6 +485,26 @@ export function YouTubePlayer({ playlistUrl, storageKey }: YouTubePlayerProps) {
     if (!progressKey || items.length === 0) return;
     window.localStorage.setItem(progressKey, String(currentIndex));
   }, [progressKey, currentIndex, items.length]);
+
+  // --- load "seen" flags ----------------------------------------------------
+  useEffect(() => {
+    if (!dbVideoId) return;
+
+    let cancelled = false;
+
+    fetch(`/api/videos/views/get?videoId=${dbVideoId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.seen) setSeen(new Set<string>(data.seen));
+      })
+      .catch(() => {
+        // Non-fatal — the panel just starts with nothing marked.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dbVideoId]);
 
   // --- controls -------------------------------------------------------------
   const selectIndex = useCallback((index: number) => {
@@ -588,6 +665,28 @@ export function YouTubePlayer({ playlistUrl, storageKey }: YouTubePlayerProps) {
           </>
         )}
 
+        {/* Single-video pages have no list to check off, so offer a direct
+            watched toggle here. */}
+        {!hasPlaylist && dbVideoId && currentVideoId && (
+          <button
+            onClick={() => setSeenFor(currentVideoId)}
+            disabled={!ready}
+            title={seen.has(currentVideoId) ? 'Marked as watched' : 'Mark as watched'}
+            className={`flex items-center gap-1.5 rounded-md border border-gray-800 bg-[#111] px-2.5 py-2 text-sm transition-colors disabled:opacity-30 ${
+              seen.has(currentVideoId)
+                ? 'text-green-400'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {seen.has(currentVideoId) ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <Circle className="h-4 w-4" />
+            )}
+            {seen.has(currentVideoId) ? 'Watched' : 'Mark watched'}
+          </button>
+        )}
+
         <a
           href={watchUrl}
           target="_blank"
@@ -607,8 +706,10 @@ export function YouTubePlayer({ playlistUrl, storageKey }: YouTubePlayerProps) {
           loading={loadingList}
           sorted={sorted}
           canSort={canSort}
+          seen={dbVideoId ? seen : null}
           onToggleSort={() => setSortOverride(!sorted)}
           onSelect={selectIndex}
+          onToggleSeen={(ytVideoId) => setSeenFor(ytVideoId)}
         />
       )}
     </div>

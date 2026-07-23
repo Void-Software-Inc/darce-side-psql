@@ -1,7 +1,15 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowDownUp, ChevronDown, ListVideo, Play, Search } from 'lucide-react';
+import {
+  ArrowDownUp,
+  CheckCircle2,
+  ChevronDown,
+  Circle,
+  ListVideo,
+  Play,
+  Search,
+} from 'lucide-react';
 import { youtubeThumbnail } from '@/lib/youtube';
 
 export interface PlaylistItem {
@@ -20,8 +28,11 @@ interface PlaylistPanelProps {
   loading: boolean;
   sorted: boolean;
   canSort: boolean;
+  /** Set of seen YouTube ids, or null when seen-tracking is unavailable. */
+  seen: Set<string> | null;
   onToggleSort: () => void;
   onSelect: (playlistIndex: number) => void;
+  onToggleSeen: (ytVideoId: string) => void;
 }
 
 export function PlaylistPanel({
@@ -31,11 +42,17 @@ export function PlaylistPanel({
   loading,
   sorted,
   canSort,
+  seen,
   onToggleSort,
   onSelect,
+  onToggleSeen,
 }: PlaylistPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [filter, setFilter] = useState('');
+
+  const seenCount = seen
+    ? items.filter((item) => seen.has(item.id)).length
+    : 0;
 
   const position = items.findIndex(
     (item) => item.playlistIndex === currentPlaylistIndex
@@ -63,6 +80,12 @@ export function PlaylistPanel({
           <span className="text-sm text-gray-400">
             {position >= 0 ? position + 1 : 1} / {items.length}
           </span>
+          {seen && seenCount > 0 && (
+            <span className="flex items-center gap-1 text-sm text-green-400">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {seenCount} seen
+            </span>
+          )}
           <ChevronDown
             className={`h-4 w-4 text-gray-400 transition-transform ${
               collapsed ? '-rotate-90' : ''
@@ -116,51 +139,80 @@ export function PlaylistPanel({
 
           {visibleItems.map((item, displayIndex) => {
             const isCurrent = item.playlistIndex === currentPlaylistIndex;
+            const isSeen = seen?.has(item.id) ?? false;
 
             return (
-              <button
+              <div
                 key={`${item.id}-${item.playlistIndex}`}
-                onClick={() => onSelect(item.playlistIndex)}
-                className={`flex w-full items-center gap-3 px-3 py-2 text-left transition-colors ${
+                className={`flex items-center gap-2 pr-2 transition-colors ${
                   isCurrent ? 'bg-[#1d1d1d]' : 'hover:bg-[#181818]'
                 }`}
               >
-                <span className="w-6 shrink-0 text-center text-xs text-gray-500">
-                  {isCurrent ? (
-                    <Play
-                      className={`mx-auto h-3 w-3 text-white ${
-                        isPlaying ? 'fill-white' : ''
+                <button
+                  onClick={() => onSelect(item.playlistIndex)}
+                  className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left"
+                >
+                  <span className="w-6 shrink-0 text-center text-xs text-gray-500">
+                    {isCurrent ? (
+                      <Play
+                        className={`mx-auto h-3 w-3 text-white ${
+                          isPlaying ? 'fill-white' : ''
+                        }`}
+                      />
+                    ) : (
+                      (filter ? item.playlistIndex : displayIndex) + 1
+                    )}
+                  </span>
+
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={youtubeThumbnail(item.id)}
+                    alt=""
+                    loading="lazy"
+                    className={`h-11 w-20 shrink-0 rounded object-cover transition-opacity ${
+                      isSeen && !isCurrent ? 'opacity-40' : ''
+                    }`}
+                  />
+
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`line-clamp-2 text-sm ${
+                        isCurrent
+                          ? 'text-white'
+                          : isSeen
+                            ? 'text-gray-500'
+                            : 'text-gray-300'
                       }`}
-                    />
-                  ) : (
-                    (filter ? item.playlistIndex : displayIndex) + 1
-                  )}
-                </span>
+                    >
+                      {item.title ??
+                        (loading ? 'Loading…' : `Video ${item.playlistIndex + 1}`)}
+                    </span>
+                    {item.author && (
+                      <span className="mt-0.5 block truncate text-xs text-gray-500">
+                        {item.author}
+                      </span>
+                    )}
+                  </span>
+                </button>
 
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={youtubeThumbnail(item.id)}
-                  alt=""
-                  loading="lazy"
-                  className="h-11 w-20 shrink-0 rounded object-cover"
-                />
-
-                <span className="min-w-0 flex-1">
-                  <span
-                    className={`line-clamp-2 text-sm ${
-                      isCurrent ? 'text-white' : 'text-gray-300'
+                {seen && (
+                  <button
+                    onClick={() => onToggleSeen(item.id)}
+                    title={isSeen ? 'Mark as not seen' : 'Mark as seen'}
+                    className={`shrink-0 rounded-md p-1.5 transition-colors ${
+                      isSeen
+                        ? 'text-green-400 hover:text-green-300'
+                        : 'text-gray-600 hover:text-gray-300'
                     }`}
                   >
-                    {item.title ??
-                      (loading ? 'Loading…' : `Video ${item.playlistIndex + 1}`)}
-                  </span>
-                  {item.author && (
-                    <span className="mt-0.5 block truncate text-xs text-gray-500">
-                      {item.author}
-                    </span>
-                  )}
-                </span>
-              </button>
+                    {isSeen ? (
+                      <CheckCircle2 className="h-5 w-5" />
+                    ) : (
+                      <Circle className="h-5 w-5" />
+                    )}
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
