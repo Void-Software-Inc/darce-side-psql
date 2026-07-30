@@ -109,6 +109,29 @@ CREATE TABLE IF NOT EXISTS video_views (
 
 CREATE INDEX IF NOT EXISTS idx_video_views_user_video ON video_views (user_id, video_id);
 
+-- Presence + streaks -------------------------------------------------------
+-- last_seen is refreshed (throttled) on every authenticated request, so it
+-- answers "last seen 32 mins ago"; last_login only moves on an actual login.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP WITH TIME ZONE;
+
+-- One row per day a user showed up. The streak is the length of the run of
+-- consecutive days ending today (or yesterday, so it survives until midnight).
+CREATE TABLE IF NOT EXISTS user_active_days (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day DATE NOT NULL,
+    PRIMARY KEY (user_id, day)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_active_days_user_day ON user_active_days (user_id, day DESC);
+
+-- Seed presence from the login we already had, so existing members don't read
+-- as "never seen" the first time this ships.
+UPDATE users SET last_seen = last_login WHERE last_seen IS NULL AND last_login IS NOT NULL;
+
+INSERT INTO user_active_days (user_id, day)
+SELECT id, last_login::date FROM users WHERE last_login IS NOT NULL
+ON CONFLICT DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS permissions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,

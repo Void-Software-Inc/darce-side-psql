@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { STREAKS_CTE } from '@/lib/activity';
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,12 +42,16 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Get all users
+    // Get all users, most recently connected first
     const usersResult = await query(
-      `SELECT u.id, u.username, u.email, r.name as role, u.created_at, u.last_login, u.team
+      `WITH ${STREAKS_CTE}
+       SELECT u.id, u.username, u.email, r.name as role, u.created_at,
+              u.last_login, u.last_seen, u.team, u.avatar_hue,
+              COALESCE(st.streak, 0) as streak
        FROM users u
        JOIN roles r ON u.role_id = r.id
-       ORDER BY u.created_at DESC`
+       LEFT JOIN streaks st ON st.user_id = u.id
+       ORDER BY u.last_login DESC NULLS LAST`
     );
     
     // Return the users

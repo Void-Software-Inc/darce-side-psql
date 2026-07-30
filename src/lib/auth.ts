@@ -1,6 +1,7 @@
 import { hashPassword, comparePassword } from './password-utils';
 import jwt from 'jsonwebtoken';
 import { pool, query } from './db';
+import { recordLogin } from './activity';
 import { cookies, headers } from 'next/headers';
 
 // Types
@@ -91,11 +92,8 @@ export async function authenticateUser(usernameOrEmail: string, password: string
 
     const permissions = permissionsResult.rows.map(row => row.name);
     
-    // Update last login time
-    await query(
-      `UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`,
-      [user.id]
-    );
+    // Update last login time and count today towards the streak
+    await recordLogin(user.id);
 
     // Create user object without password
     const userWithoutPassword: User = {

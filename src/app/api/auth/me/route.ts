@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getUserById } from '@/lib/auth';
+import { touchUserActivity, getUserStreak } from '@/lib/activity';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,6 +33,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    // Every authenticated page view counts as showing up today
+    await touchUserActivity(user.id);
+    const streak = await getUserStreak(user.id);
+
     // Return the user info
     return NextResponse.json({
       success: true,
@@ -41,7 +46,8 @@ export async function GET(request: NextRequest) {
         email: user.email,
         role: user.role,
         permissions: user.permissions,
-        avatar_hue: user.avatar_hue ?? null
+        avatar_hue: user.avatar_hue ?? null,
+        streak
       }
     });
   } catch (error) {
