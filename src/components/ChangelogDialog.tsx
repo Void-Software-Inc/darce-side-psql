@@ -11,12 +11,29 @@ import {
 } from '@/components/ui/dialog';
 import { APP_VERSION, CHANGELOG } from '@/lib/changelog';
 
+interface ChangelogDialogProps {
+  /** Drive the dialog from outside — used by the mobile account menu. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Extra classes on the version badge, e.g. to hide it on small screens. */
+  triggerClassName?: string;
+}
+
 /**
  * A small version badge next to the logo. Clicking it opens a plain-language
- * "What's new" dialog built from the CHANGELOG list.
+ * "What's new" dialog built from the CHANGELOG list. Pass open/onOpenChange to
+ * open it from somewhere else, such as a menu item.
  */
-export function ChangelogDialog() {
-  const [open, setOpen] = useState(false);
+export function ChangelogDialog({
+  open: controlledOpen,
+  onOpenChange,
+  triggerClassName = '',
+}: ChangelogDialogProps = {}) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = isControlled ? (onOpenChange ?? (() => {})) : setUncontrolledOpen;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -24,7 +41,7 @@ export function ChangelogDialog() {
         <button
           title="What’s new"
           aria-label={`What’s new — version ${APP_VERSION}`}
-          className="rounded-full border border-gray-800 bg-[#111] px-2 py-0.5 text-xs font-medium text-gray-400 transition-colors hover:border-gray-600 hover:text-white"
+          className={`shrink-0 rounded-full border border-gray-800 bg-[#111] px-2 py-0.5 text-xs font-medium text-gray-400 transition-colors hover:border-gray-600 hover:text-white ${triggerClassName}`}
         >
           v{APP_VERSION}
         </button>

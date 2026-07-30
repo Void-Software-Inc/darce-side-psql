@@ -15,11 +15,13 @@ import {
   LayoutDashboard,
   Lightbulb,
   LogOut,
+  Sparkles,
   UserRound,
   Users,
   Clapperboard,
 } from 'lucide-react';
 import { ChangelogDialog } from '@/components/ChangelogDialog';
+import { APP_VERSION } from '@/lib/changelog';
 import { UserAvatar } from '@/components/UserAvatar';
 import { StreakBadge } from '@/components/StreakBadge';
 
@@ -50,6 +52,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -126,20 +129,20 @@ export default function Navbar() {
   if (isLoginPage || isRegisterPage || !user) return null;
 
   const menuItemClass =
-    'flex items-center gap-3 rounded-md px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-[#1c1c1c] hover:text-white';
+    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-[#1c1c1c] hover:text-white';
 
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-gray-800">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-3">
+        <div className="container mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
           {/* Back + wordmark */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {!isHomePage && (
               <button
                 onClick={handleBack}
                 title="Go back"
                 aria-label="Go back"
-                className="rounded-md p-2 text-gray-400 transition-colors hover:bg-[#111] hover:text-white cursor-pointer"
+                className="shrink-0 rounded-md p-2 text-gray-400 transition-colors hover:bg-[#111] hover:text-white cursor-pointer"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -147,16 +150,21 @@ export default function Navbar() {
 
             <Link
               href="/"
-              className="text-xl font-bold tracking-tighter text-gray-400 transition-colors hover:text-white"
+              className="truncate text-base sm:text-xl font-bold tracking-tighter text-gray-400 transition-colors hover:text-white"
             >
               DARCE SIDE
             </Link>
 
-            <ChangelogDialog />
+            {/* On phones the version badge moves into the account menu */}
+            <ChangelogDialog
+              open={changelogOpen}
+              onOpenChange={setChangelogOpen}
+              triggerClassName="hidden sm:inline-flex"
+            />
           </div>
 
           {/* Primary navigation */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
             {NAV_ICONS.filter((item) => !item.adminOnly || isAdmin).map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
@@ -167,7 +175,7 @@ export default function Navbar() {
                   href={item.href}
                   title={item.label}
                   aria-label={item.label}
-                  className={`rounded-md p-2 transition-colors hover:bg-[#111] hover:text-white ${
+                  className={`rounded-md p-2 transition-colors hover:bg-[#111] hover:text-white active:bg-[#1c1c1c] ${
                     isActive ? 'bg-[#111] text-white' : 'text-gray-400'
                   }`}
                 >
@@ -181,7 +189,7 @@ export default function Navbar() {
               <PopoverTrigger asChild>
                 <button
                   aria-label="Account menu"
-                  className="ml-1 flex items-center gap-1.5 rounded-md p-1 pr-2 text-gray-400 transition-colors hover:bg-[#111] hover:text-white cursor-pointer"
+                  className="ml-0.5 flex shrink-0 items-center gap-1 rounded-md p-1 sm:pr-2 text-gray-400 transition-colors hover:bg-[#111] hover:text-white cursor-pointer"
                 >
                   <UserAvatar
                     username={user.username}
@@ -189,14 +197,16 @@ export default function Navbar() {
                     size={28}
                   />
                   <ChevronDown
-                    className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-180' : ''}`}
+                    className={`hidden h-4 w-4 transition-transform sm:block ${menuOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
               </PopoverTrigger>
 
               <PopoverContent
                 align="end"
-                className="w-60 border-gray-800 bg-[#111] p-1.5 text-gray-200"
+                sideOffset={8}
+                collisionPadding={12}
+                className="w-[calc(100vw-1.5rem)] max-w-60 border-gray-800 bg-[#111] p-1.5 text-gray-200"
               >
                 <div className="flex items-center gap-3 px-3 py-2">
                   <UserAvatar
@@ -229,6 +239,20 @@ export default function Navbar() {
                   <Users className="h-4 w-4" />
                   Members
                 </Link>
+
+                <button
+                  onClick={() => {
+                    // Let the popover finish closing before the dialog takes
+                    // over focus, otherwise Radix leaves the body inert.
+                    setMenuOpen(false);
+                    setTimeout(() => setChangelogOpen(true), 150);
+                  }}
+                  className={`w-full cursor-pointer sm:hidden ${menuItemClass}`}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  What’s new
+                  <span className="ml-auto text-xs text-gray-500">v{APP_VERSION}</span>
+                </button>
 
                 <div className="my-1 h-px bg-gray-800" />
 

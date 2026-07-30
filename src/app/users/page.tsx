@@ -144,7 +144,7 @@ function UsersContent() {
             <SearchComponent onSearch={setSearchQuery} />
           </Suspense>
 
-          <div className="flex items-center gap-1 rounded-md border border-gray-800 bg-[#111] p-1">
+          <div className="flex flex-wrap items-center gap-1 rounded-md border border-gray-800 bg-[#111] p-1">
             {SORT_OPTIONS.map((option) => (
               <button
                 key={option.value}
