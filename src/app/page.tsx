@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VideoCarousel } from '@/components/VideoCarousel';
+import { StreakBadge } from '@/components/StreakBadge';
 
 interface User {
   id: number;
   username: string;
   email: string;
   role?: string;
+  streak?: number;
 }
 
 interface Video {
@@ -111,8 +113,15 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-12">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {user.username}</h1>
-          <p className="text-gray-400">Ready to level up your grappling game?</p>
+          <div className="mb-2 flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-bold">Welcome back, {user.username}</h1>
+            <StreakBadge days={user.streak ?? 0} showZero />
+          </div>
+          <p className="text-gray-400">
+            {user.streak && user.streak > 1
+              ? `${user.streak} days in a row — keep it going.`
+              : 'Ready to level up your grappling game?'}
+          </p>
         </div>
 
         {/* Instructionals Section */}

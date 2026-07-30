@@ -2,7 +2,7 @@
 // keep each line short and about what people can *do*, not how it was built.
 // Newest version first; APP_VERSION is what shows next to the logo.
 
-export const APP_VERSION = '1.0';
+export const APP_VERSION = '1.1';
 
 export interface ChangelogEntry {
   version: string;
@@ -14,10 +14,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1',
+    date: 'July 2026',
+    title: 'Streaks & a simpler menu',
+    latest: true,
+    changes: [
+      'Daily streak — see how many days in a row you’ve shown up, on the home page and on every member card.',
+      'A back button in the top-left, and a cleaner menu with icons instead of a long list of links.',
+      'Your profile, the member list and logout now live in one menu under your picture.',
+      'Members are sorted by who connected last, with a green dot for whoever is online right now.',
+    ],
+  },
+  {
     version: '1.0',
     date: 'July 2026',
     title: 'Big update',
-    latest: true,
     changes: [
       'Brand-new video player — see every video in a playlist and jump to any one.',
       'Series now play in the right order, from the first video to the last.',

@@ -22,6 +22,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { UserAvatar } from '@/components/UserAvatar';
+import { StreakBadge } from '@/components/StreakBadge';
+import { timeAgo, formatDateTime, isOnline } from '@/lib/time';
 
 interface User {
   id: number;
@@ -30,6 +33,9 @@ interface User {
   role: string;
   created_at: string;
   last_login: string | null;
+  last_seen: string | null;
+  streak: number;
+  avatar_hue: number | null;
 }
 
 const USERS_PER_PAGE = 5;
@@ -132,15 +138,17 @@ export default function UsersOverview() {
   };
 
   const LoadingSkeleton = () => (
-    <div className="min-w-[640px]">
+    <div className="min-w-[880px]">
       <Table>
         <TableHeader>
           <TableRow className="border-gray-800">
             <TableHead className="text-gray-400 font-medium">Username</TableHead>
             <TableHead className="text-gray-400 font-medium hidden md:table-cell">Email</TableHead>
             <TableHead className="text-gray-400 font-medium">Role</TableHead>
-            <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Joined</TableHead>
+            <TableHead className="text-gray-400 font-medium">Streak</TableHead>
+            <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Last Seen</TableHead>
             <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Last Login</TableHead>
+            <TableHead className="text-gray-400 font-medium hidden lg:table-cell">Joined</TableHead>
             <TableHead className="text-gray-400 font-medium">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -156,11 +164,17 @@ export default function UsersOverview() {
               <TableCell className="py-3">
                 <div className="h-4 bg-gray-800 rounded animate-pulse w-16"></div>
               </TableCell>
-              <TableCell className="py-3 hidden sm:table-cell">
-                <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
+              <TableCell className="py-3">
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-12"></div>
               </TableCell>
               <TableCell className="py-3 hidden sm:table-cell">
-                <div className="h-4 bg-gray-800 rounded animate-pulse w-32"></div>
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-24"></div>
+              </TableCell>
+              <TableCell className="py-3 hidden sm:table-cell">
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-40"></div>
+              </TableCell>
+              <TableCell className="py-3 hidden lg:table-cell">
+                <div className="h-4 bg-gray-800 rounded animate-pulse w-40"></div>
               </TableCell>
               <TableCell className="py-3">
                 <div className="h-4 bg-gray-800 rounded animate-pulse w-16"></div>
@@ -200,15 +214,19 @@ export default function UsersOverview() {
         {loading ? (
           <LoadingSkeleton />
         ) : (
-          <div className="min-w-[640px]">
+          <div className="min-w-[880px]">
             <Table>
               <TableHeader>
                 <TableRow className="border-[#2a2a2a] bg-[#222222]">
                   <TableHead className="text-gray-400 font-medium">Username</TableHead>
                   <TableHead className="text-gray-400 font-medium hidden md:table-cell">Email</TableHead>
                   <TableHead className="text-gray-400 font-medium">Role</TableHead>
-                  <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Joined</TableHead>
-                  <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Last Login</TableHead>
+                  <TableHead className="text-gray-400 font-medium">Streak</TableHead>
+                  <TableHead className="text-gray-400 font-medium hidden sm:table-cell">Last Seen</TableHead>
+                  <TableHead className="text-gray-400 font-medium hidden sm:table-cell">
+                    Last Login <span className="text-gray-600">↓</span>
+                  </TableHead>
+                  <TableHead className="text-gray-400 font-medium hidden lg:table-cell">Joined</TableHead>
                   <TableHead className="text-gray-400 font-medium">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -216,14 +234,25 @@ export default function UsersOverview() {
                 {paginatedUsers.map((user) => (
                   <TableRow key={user.id} className="border-[#2a2a2a] hover:bg-[#222222] transition-colors">
                     <TableCell className="text-gray-200 py-3">
-                      <div>
-                        <div 
-                          className="cursor-pointer hover:text-indigo-600 transition-colors"
-                          onClick={() => router.push(`/users/${user.username}`)}
-                        >
-                          {user.username}
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          <UserAvatar username={user.username} hue={user.avatar_hue} size={32} />
+                          {isOnline(user.last_seen) && (
+                            <span
+                              title="Online now"
+                              className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#1a1a1a] bg-green-500"
+                            />
+                          )}
                         </div>
-                        <div className="text-gray-400 text-sm md:hidden">{user.email}</div>
+                        <div>
+                          <div
+                            className="cursor-pointer hover:text-indigo-600 transition-colors"
+                            onClick={() => router.push(`/users/${user.username}`)}
+                          >
+                            {user.username}
+                          </div>
+                          <div className="text-gray-400 text-sm md:hidden">{user.email}</div>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-gray-200 py-3 hidden md:table-cell">{user.email}</TableCell>
@@ -236,14 +265,30 @@ export default function UsersOverview() {
                         {user.role}
                       </span>
                     </TableCell>
-                    <TableCell className="text-gray-200 py-3 hidden sm:table-cell">
-                      {new Date(user.created_at).toLocaleString()}
+                    <TableCell className="py-3">
+                      <StreakBadge days={user.streak} size="sm" showZero />
                     </TableCell>
-                    <TableCell className="text-gray-200 py-3 hidden sm:table-cell">
-                      {user.last_login 
-                        ? new Date(user.last_login).toLocaleString()
-                        : 'Never'
-                      }
+                    <TableCell className="text-gray-200 py-3 hidden sm:table-cell whitespace-nowrap">
+                      {isOnline(user.last_seen) ? (
+                        <span className="text-green-400">Online now</span>
+                      ) : (
+                        <span title={formatDateTime(user.last_seen) ?? 'Never'}>
+                          {timeAgo(user.last_seen) ?? 'Never'}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-200 py-3 hidden sm:table-cell whitespace-nowrap">
+                      {user.last_login ? (
+                        <div>
+                          <div>{formatDateTime(user.last_login)}</div>
+                          <div className="text-gray-500 text-xs">{timeAgo(user.last_login)}</div>
+                        </div>
+                      ) : (
+                        'Never'
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-200 py-3 hidden lg:table-cell whitespace-nowrap">
+                      {formatDateTime(user.created_at)}
                     </TableCell>
                     <TableCell className="py-3 text-left">
                       <Button

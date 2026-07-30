@@ -5,9 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, CalendarDays, Heart, MessageSquare } from 'lucide-react';
+import { Search, CalendarDays, Clock, Heart, MessageSquare } from 'lucide-react';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { UserAvatar } from '@/components/UserAvatar';
+import { StreakBadge } from '@/components/StreakBadge';
+import { timeAgo, formatDateTime, isOnline } from '@/lib/time';
 
 interface User {
   username: string;
@@ -18,7 +20,17 @@ interface User {
   team: string;
   created_requests_count: number;
   avatar_hue: number | null;
+  last_login: string | null;
+  last_seen: string | null;
+  streak: number;
 }
+
+const SORT_OPTIONS = [
+  { value: 'recent', label: 'Last login' },
+  { value: 'streak', label: 'Streak' },
+  { value: 'joined', label: 'Newest' },
+  { value: 'name', label: 'Name' },
+] as const;
 
 interface PaginationInfo {
   currentPage: number;
@@ -54,6 +66,7 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [sort, setSort] = useState(searchParams.get('sort') || 'recent');
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: parseInt(searchParams.get('page') || '1'),
     totalPages: 1,
@@ -63,12 +76,13 @@ function UsersContent() {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const fetchUsers = async (page: number, search: string) => {
+  const fetchUsers = async (page: number, search: string, sortBy: string) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        q: search
+        q: search,
+        sort: sortBy
       });
       const response = await fetch(`/api/users/search?${params}`);
       if (!response.ok) {
@@ -86,8 +100,8 @@ function UsersContent() {
 
   useEffect(() => {
     const currentPage = parseInt(searchParams.get('page') || '1');
-    fetchUsers(currentPage, debouncedSearch);
-  }, [debouncedSearch, searchParams]);
+    fetchUsers(currentPage, debouncedSearch, sort);
+  }, [debouncedSearch, searchParams, sort]);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -95,6 +109,14 @@ function UsersContent() {
     if (debouncedSearch) {
       params.set('q', debouncedSearch);
     }
+    router.push(`/users?${params.toString()}`);
+  };
+
+  const handleSortChange = (value: string) => {
+    setSort(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sort', value);
+    params.set('page', '1');
     router.push(`/users?${params.toString()}`);
   };
 
@@ -112,14 +134,32 @@ function UsersContent() {
     <>
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-6">Users</h1>
-        
-        <Suspense fallback={
-          <div className="relative w-full sm:w-96">
-            <div className="h-10 bg-[#111] border border-gray-800 rounded-md animate-pulse" />
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Suspense fallback={
+            <div className="relative w-full sm:w-96">
+              <div className="h-10 bg-[#111] border border-gray-800 rounded-md animate-pulse" />
+            </div>
+          }>
+            <SearchComponent onSearch={setSearchQuery} />
+          </Suspense>
+
+          <div className="flex items-center gap-1 rounded-md border border-gray-800 bg-[#111] p-1">
+            {SORT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleSortChange(option.value)}
+                className={`rounded px-3 py-1.5 text-sm transition-colors cursor-pointer ${
+                  sort === option.value
+                    ? 'bg-[#222] text-white'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
-        }>
-          <SearchComponent onSearch={setSearchQuery} />
-        </Suspense>
+        </div>
       </div>
 
       {loading ? (
@@ -144,12 +184,36 @@ function UsersContent() {
                 onClick={() => router.push(`/users/${user.username}`)}
               >
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <UserAvatar username={user.username} hue={user.avatar_hue} size={44} />
-                    <div>
-                      <h2 className="text-xl font-semibold text-white mb-1">{user.username}</h2>
-                      <div className="flex items-center gap-2 text-gray-400 text-sm">
-                        <CalendarDays className="h-4 w-4" />
+                  <div className="flex items-start gap-3">
+                    <div className="relative shrink-0">
+                      <UserAvatar username={user.username} hue={user.avatar_hue} size={44} />
+                      {isOnline(user.last_seen) && (
+                        <span
+                          title="Online now"
+                          className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-[#111] bg-green-500"
+                        />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="mb-1 flex items-center gap-2">
+                        <h2 className="truncate text-xl font-semibold text-white">{user.username}</h2>
+                        <StreakBadge days={user.streak} size="sm" />
+                      </div>
+                      <div
+                        className="flex items-center gap-2 text-gray-400 text-sm"
+                        title={formatDateTime(user.last_seen ?? user.last_login) ?? 'Never connected'}
+                      >
+                        <Clock className="h-4 w-4 shrink-0" />
+                        <span className="truncate">
+                          {isOnline(user.last_seen)
+                            ? 'Online now'
+                            : timeAgo(user.last_seen ?? user.last_login)
+                              ? `Last seen ${timeAgo(user.last_seen ?? user.last_login)}`
+                              : 'Never connected'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs mt-1">
+                        <CalendarDays className="h-3.5 w-3.5 shrink-0" />
                         <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
