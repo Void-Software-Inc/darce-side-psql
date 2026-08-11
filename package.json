@@ -42,7 +42,7 @@
     "@types/react-dom": "19",
     "@types/webpack": "5.28.5",
     "eslint": "9",
-    "eslint-config-next": "15.5.18",
+    "eslint-config-next": "15.5.21",
     "ignore-loader": "0.1.2",
     "tailwindcss": "4",
     "ts-node": "10.9.2",
