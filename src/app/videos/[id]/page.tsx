@@ -131,9 +131,9 @@ export default function VideoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white py-8">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="min-h-screen bg-black text-white py-4 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content - Video and Title */}
           <div className="lg:col-span-2 space-y-6">
             <YouTubePlayer
@@ -143,9 +143,11 @@ export default function VideoPage() {
             />
             
             <div>
-              <div className="flex justify-between items-start mb-4">
-                <h1 className="text-3xl font-bold">{video.title}</h1>
-                <div className="flex items-center gap-2">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <h1 className="min-w-0 break-words text-2xl font-bold sm:text-3xl">
+                  {video.title}
+                </h1>
+                <div className="flex shrink-0 items-center gap-2">
                   <button
                     onClick={handleLike}
                     className="flex items-center text-gray-400 hover:text-red-500 transition-colors"

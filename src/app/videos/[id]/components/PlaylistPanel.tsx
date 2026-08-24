@@ -69,25 +69,26 @@ export function PlaylistPanel({
 
   return (
     <div className="rounded-lg border border-gray-800 bg-[#111]">
-      <div className="flex items-center justify-between gap-3 border-b border-gray-800 px-4 py-3">
+      <div className="flex flex-col gap-2 border-b border-gray-800 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4">
         <button
           onClick={() => setCollapsed((value) => !value)}
-          className="flex items-center gap-2 text-left text-white"
+          className="flex w-full items-center gap-2 text-left text-white sm:w-auto"
           aria-expanded={!collapsed}
         >
-          <ListVideo className="h-4 w-4 text-gray-400" />
+          <ListVideo className="h-4 w-4 shrink-0 text-gray-400" />
           <span className="font-medium">Playlist</span>
-          <span className="text-sm text-gray-400">
+          <span className="whitespace-nowrap text-sm text-gray-400">
             {position >= 0 ? position + 1 : 1} / {items.length}
           </span>
           {seen && seenCount > 0 && (
-            <span className="flex items-center gap-1 text-sm text-green-400">
+            <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-sm text-green-400">
               <CheckCircle2 className="h-3.5 w-3.5" />
               {seenCount} seen
             </span>
           )}
+          {/* On phones the chevron hugs the right edge, away from the counts */}
           <ChevronDown
-            className={`h-4 w-4 text-gray-400 transition-transform ${
+            className={`ml-auto h-4 w-4 shrink-0 text-gray-400 transition-transform sm:ml-0 ${
               collapsed ? '-rotate-90' : ''
             }`}
           />
@@ -96,7 +97,7 @@ export function PlaylistPanel({
         {!collapsed && (
           <div className="flex items-center gap-2">
             {items.length > 5 && (
-              <div className="relative w-32 sm:w-48">
+              <div className="relative flex-1 sm:w-48 sm:flex-none">
                 <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
                 <input
                   value={filter}
@@ -129,8 +130,9 @@ export function PlaylistPanel({
         )}
       </div>
 
+      {/* Shorter on phones so the nested scroll doesn't trap the page */}
       {!collapsed && (
-        <div className="max-h-[420px] overflow-y-auto">
+        <div className="max-h-[320px] overflow-y-auto sm:max-h-[420px]">
           {visibleItems.length === 0 && (
             <p className="px-4 py-6 text-center text-sm text-gray-500">
               No video matches “{filter}”.

@@ -607,7 +607,7 @@ export function YouTubePlayer({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
         {hasPlaylist && (
           <>
             <button
@@ -691,7 +691,7 @@ export function YouTubePlayer({
           href={watchUrl}
           target="_blank"
           rel="noreferrer"
-          className="ml-auto flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-white"
+          className="ml-auto flex items-center gap-1.5 whitespace-nowrap text-sm text-gray-500 transition-colors hover:text-white"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           Watch on YouTube
